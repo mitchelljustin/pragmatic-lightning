@@ -1,4 +1,5 @@
 title: Lightning From Scratch
 description: >-
-  The quickest guide to building an app that accepts Bitcoin Lightning payments.
-theme: jekyll-theme-hacker
+  The quickest guide to building a Bitcoin Lightning app.
+theme: minima
+markdown: kramdown
