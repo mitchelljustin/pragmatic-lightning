@@ -1,3 +1,7 @@
+---
+layout: home
+---
+
 # Lightning From Scratch
 
 Lightning From Scratch is the quickest guide to building an app that accepts Bitcoin Lightning payments.
