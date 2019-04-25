@@ -29,11 +29,12 @@ For this guide we'll be using the [`lnd`](https://github.com/lightningnetwork/ln
  
 To make this easy I use [Docker](https://www.docker.com/products/docker-desktop). 
 
-```bash
-$ mkdir rain-report
-$ cd rain-report
-$ wget https://raw.githubusercontent.com/mvanderh/lightningfromscratch/docker-compose.yml
-$ docker-compose up
+1. Create a new directory `rain-report` and `cd` into it
+2. Paste the underlying code into a file called `docker-compose.yaml`
+3. Run `docker-compose up`
+
+```yaml
+TODO
 ```
 
 That's it! You are now running a node on the Lightning test network. 
