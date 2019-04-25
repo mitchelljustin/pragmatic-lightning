@@ -16,11 +16,11 @@ With it you can build apps which accept Bitcoin without sacrificing transaction 
 To do this, Lightning Network uses a construct called a payment channel: a "virtual money tube" between two peers.
 A network of these payment channels enables payments to be routed between peers that don't necessarily trust each other.
  
-[Read more about Lightning Network](https://lightning.engineering/technology.html) 
+[Read more about how Lightning Network works](https://lightning.engineering/technology.html) 
 
 # Getting Started
 
-In this guide we're going to build a NodeJS + ExpressJS example web API called Rain Report, which sells weather reports for Lightning micropayments.
+In this guide we're going to build a NodeJS + ExpressJS example web app called Rain Report, which sells weather reports for Lightning micropayments.
 
 ## Run a Lightning Node
 
