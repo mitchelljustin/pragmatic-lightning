@@ -17,11 +17,7 @@ title: Lightning From Scratch
 description: >-
   The quickest guide to building an app that accepts Bitcoin Lightning payments.
 baseurl: ""
-url: "https://lightningfromscrat.ch"
 
 # Build settings
 markdown: kramdown
 theme: jekyll-theme-hacker
-plugins:
-  - jekyll-feed
-
