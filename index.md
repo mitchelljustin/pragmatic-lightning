@@ -1,10 +1,6 @@
----
-layout: home
----
+# Lightning From Scratch
 
-# {{site.title}}
-
-{{site.title}} is the quickest guide to building an app that accepts Bitcoin Lightning payments.
+Lightning From Scratch is the quickest guide to building an app that accepts Bitcoin Lightning payments.
   
 After following this guide, you'll be able to build new kinds of apps that leverage the power of Lightning micropayments.
 
