@@ -349,17 +349,16 @@ app.get("/weather", async (req, res) => {
     const invoiceRHash = req.header("X-Lightning-Invoice")
     if (invoiceRHash) {
         const invoice = await lnRpc.lookupInvoice({rHashStr: invoiceRHash})
-        if (invoice && invoice.state === 1) {
-            // Success! User's invoice was paid
+        if (invoice && invoice.state === 1) { // Invoice state "1" means it was settled (i.e. paid)
             res.send("Weather report: 15 degrees Celsius, cloudy and with a chance of lightning.")
         } else {
-            // Error, User is lying about having paid invoice
+            // Error, User is lying about having paid the invoice
             res.status(400).send("Error: Invoice has not been paid")
         }
     } else {
         const invoice = await lnRpc.addInvoice({
-        value: 1, // 1 satoshi == 1/100 million of 1 Bitcoin
-        memo: "Weather report at " + new Date().toString(), // User will see this as description for the payment
+            value: 1, // 1 satoshi == 1/100 million of 1 Bitcoin
+            memo: "Weather report at " + new Date().toString(), // User will see this as description for the payment
         })
         res.status(402)
           .header("X-Lightning-Invoice", invoice.rHash.toString("hex"))
@@ -376,7 +375,7 @@ pasting the invoice into their app, clicking pay and then `curl`ing again to get
 [Lightning Payment URIs](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md#encoding-overview) or 
 [WebLN](https://github.com/joule-labs/webln) to push invoices,
  or writing a client-side app that handles Lightning payments for the user automatically.* 
-\
+
 ## Done!
 
 # Migrating to Production
