@@ -14,7 +14,13 @@ With it you can build apps which accept Bitcoin without sacrificing transaction 
 To do this, Lightning Network uses a construct called a payment channel: a "virtual money tube" between two peers.
 A network of these payment channels enables payments to be routed between peers that don't necessarily trust each other.
  
-[Read more about how Lightning Network works](https://lightning.engineering/technology.html) 
+[Read more about how Lightning Network works](https://lightning.engineering/technology.html)
+
+# Why Bitcoin?
+
+- Bitcoin has survived for 10 years
+- Native currency of the Internet
+- Apolitical 
 
 # Getting Started
 
@@ -56,7 +62,7 @@ Don't worry about losing money: the Lightning test network (testnet) doesn't use
 **For those interested: How does my Lightning node communicate with the Bitcoin network?**
 
 Because of how Lightning Network works, a node needs to be able to read from the Bitcoin blockchain and send transactions to it.
-The Lightning node you're running uses a Bitcoin backend called Neutrino to achieve this.
+The Lightning node you're running uses a Bitcoin backend called [Neutrino](https://github.com/lightninglabs/neutrino) to achieve this.
 
 Neutrino is a Bitcoin "light client", meaning it doesn't download and verify the whole Bitcoin blockchain but instead only verifies transactions
 relevant to its own wallet. This makes it a lot easier and cheaper to run a node, which is why I use it in this guide. 
@@ -243,10 +249,73 @@ lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzar
 
 That long response string is the entire invoice encoded in a [special format](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md), which the user enters it into their Lightning wallet to pay. 
 
+Unfortunately, as it stands a user would be unable to pay that invoice. Let's quickly explore why.
+
+## How can a Node get Paid?
+
+Lightning Network is built up out of a network of payment channels.
+Each of the two sides of a channel has an amount of Bitcoin that they're able to send to the other. 
+
+So for your Lightning node to be paid, it needs to have payment channels with enough Bitcoin balance on the other side of them.
+Otherwise, the payer would not have enough Bitcoin to send you!
+
+![Channels](https://lightning.engineering/images/tech-hiw-2.png)
+<small>Courtesy of [Lightning Labs](https://lightning.engineering/)</small>
+
+In Lightning nomenclature this is called "inbound liquidity", and the lack of it is 
+a tough problem that holds back widespread adoption. A lot of smart people
+are trying to come up with solutions. Time will tell whether they succeed.
+
+To make sure your Lightning node has enough inbound liquidity and can be paid, 
+we're simply going to create a new "user" wallet, get some testnet Bitcoins and then open a channel directly with your node.
+
+## Creating a User Wallet
+
+My recommendation for creating a user wallet is to install the [Zap Desktop Wallet](https://github.com/LN-Zap/zap-desktop#install).
+Using a desktop wallet app makes it easier to distinguish between the "server" wallet and the "client" wallet.
+
+The setup for the Zap desktop wallet is very similar to the one you did earlier with `lncli`. You might have to wait a while
+for the wallet to sync with the Bitcoin blockchain.
+
+![Zap Syncing](./images/zap-syncing.png)
+
+- In the meanwhile, you can start getting testnet BTC
+
+While it's syncing, it's time to get some free testnet Bitcoins. 
+(Don't get your hopes up; testnet Bitcoins are not worth any money :)
+
+## Getting some Testnet Bitcoin
+
+The easiest way to get testnet Bitcoins is to use a service that gives out free coins called a "faucet".
+There's a few of them online, but my favourite is [Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/).
+
+## Opening a Channel
+
+- Find node pubkey
+- Use localhost?
+- Open channel with enough satoshi
+- Teach about "lncli -n testnet"
+
 ## Paying the Invoice
 
-TODO 
+- curl localhost:8000/weather
+- enter payreq into user wallet, click pay
+- invoice paid! but wait, how to 
 
-# Moving to Production
+--- GOAL TODAY APR 26 ---
 
-TODO
+## Recording the Payment
+
+- +code
+- payment tokens
+
+
+## Done!
+
+# Migrating to Production
+
+- Don't put more than $50 USD on node
+- Store cipher seed mnemonic and wallet password in secure place
+- Node needs to be online at all times
+- Change Docker-compose config to bitcoin.mainnet=1 
+- Run Bitcoin full node (for now) 
