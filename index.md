@@ -28,22 +28,46 @@ For this guide we'll be using the [`lnd`](https://github.com/lightningnetwork/ln
 To make this easy I use [Docker](https://www.docker.com/products/docker-desktop). 
 
 1. Create a new directory `rain-report` and `cd` into it
-2. Paste the underlying code into a file called `docker-compose.yaml`
+2. Paste the underlying code into a file called `docker-compose.yml`
 3. Run `docker-compose up`
 
 ```yaml
-TODO
+version: "3.7"
+
+services:
+  lnd:
+    image: btcpayserver/lnd:v0.6-beta
+    ports:
+      - "9735:9735"
+      - "10009:10009"
+    volumes:
+      - ./lnd_data:/root/.lnd
+    command: >
+      lnd
+        --rpclisten=0.0.0.0:10009
+        --bitcoin.active
+        --bitcoin.testnet
+        --bitcoin.node=neutrino
 ```
 
 That's it! You are now running a node on the Lightning test network. 
-Don't worry about losing money: the Lightning test network doesn't use real Bitcoins. 
+Don't worry about losing money: the Lightning test network (testnet) doesn't use real Bitcoins. 
 
-(You'll see a new directory called `lnd_data/` which contains files used by `lnd`.
-We will be using files from this directory to connect to the node later on.)
+**For those interested: How does my Lightning node communicate with the Bitcoin network?**
+
+Because of how Lightning Network works, a node needs to be able to read from the Bitcoin blockchain and send transactions to it.
+The Lightning node you're running uses a Bitcoin backend called Neutrino to achieve this.
+
+Neutrino is a Bitcoin "light client", meaning it doesn't download and verify the whole Bitcoin blockchain but instead only verifies transactions
+relevant to its own wallet. This makes it a lot easier and cheaper to run a node, which is why I use it in this guide. 
+
+Neutrino is still early days and potentially insecure. 
+That means that once you migrate off testnet and start handling real money,
+you'll need to run a "full" Bitcoin node that processes and stores every block in the blockchain 
 
 ## Build the Weather API
 
-Create a new NodeJS/ExpressJS project.
+Now it's time to create the Weather API. Start a new NodeJS/ExpressJS project.
 
 ```bash
 $ yarn init
@@ -86,9 +110,12 @@ Of course you can't actually pay yet. Let's fix that.
 
 ## Initialize your Lightning Wallet
 
-Before the Weather API can get paid, you need to initialize your Lightning wallet: the private key used to control your money on your Lightning node. 
+Before the Weather API can get paid, you need to initialize your Lightning wallet: the private key used to control the money on your Lightning node. 
 
 To do this we're going to run the `lncli create` command inside Docker and generate a new random private key.
+
+Since we're running on testnet the password doesn't need to be secure.
+Of course, if you run on mainnet you need a secure password or your money might get stolen. 
 
 ```bash
 $ docker-compose exec lnd lncli create
@@ -103,12 +130,11 @@ Input your passphrase if you wish to encrypt it (or press enter to proceed witho
 Generating fresh cipher seed...
 ```
 
-You should get a printout of your "cipher seed mnemonic": 24 words that map one-to-one to your generated private key.
-Store this mnemonic in a text file `mnemonic.txt`.
+You should get a printout of your "cipher seed mnemonic": 24 words that map one-to-one to your generated private key. 
 
-(When you migrate to mainnet, you need to store the mnemonic in a secure place, like in 1Password or on a piece of paper.) 
+Don't worry about saving this right now. But when you migrate to mainnet, you need to store the mnemonic in a secure place, like in 1Password or on a piece of paper.
 
-Your Lightning node is now initialized and running on the Bitcoin testnet. Time to connect the Weather API to it. 
+Your Lightning node is now initialized and ready to go! Time to connect the Weather API to it. 
 
 ## Connect your Web App to Lightning
 
@@ -138,8 +164,7 @@ The app needs three pieces of information to connect to the node:
 
 1. Address and port, to locate the node.
 2. TLS certificate, which authenticates the node.
-3. An authentication string called a Macaroon, which enables the app to perform privileged actions.  
-
+3. An authentication string called a Macaroon, which enables the app to perform privileged actions like requesting money.  
 
 The first one is easy: the node is running locally and exposes the RPC interface on port 10009.
 
@@ -150,7 +175,7 @@ const lnRpc = await connectToLnNode({
 })
 ```
 
-We will use files from `lnd_data/` to fill the last two: TLS certificate and Macaroon.  
+We will use files from the `lnd_data/` directory used by `lnd` to fill the last two: TLS certificate and Macaroon.  
 
 ```javascript
 const lnRpc = await connectToLnNode({
@@ -160,7 +185,7 @@ const lnRpc = await connectToLnNode({
 })
 ```
 
-Test the connection by calling the [`getInfo`](https://api.lightning.community/#getinfo) RPC method.
+Test the connection by calling the [`getInfo`](https://api.lightning.community/#getinfo) Lightning RPC method.
 
 ```javascript
 const lnRpc = await connectToLnNode({
@@ -178,7 +203,6 @@ You should get output that looks like this.
 ```
 
 Hooray, the app is connected to our Lightning node!
-
 
 ## Generate a Lightning Invoice
 
@@ -207,7 +231,17 @@ lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzar
 
 That long response string is the entire invoice encoded in a [special format](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md), which the user enters it into their Lightning wallet to pay. 
 
-Well, almost.
+**Note: Unlocking your Wallet**
+
+In the future, you might get an error when calling RPC methods that looks like `Error: 12 UNIMPLEMENTED: unknown service lnrpc.Lightning`.
+
+This is because when a Lightning node starts with a wallet already initialized, it blocks calls to most RPC methods until it's unlocked with the wallet password.
+There are two ways to unlock it, which one you use depends on your needs.
+
+1. Manually execute an `lncli unlock` command after the node starts up and enter the wallet password.
+Remember, in our case you would have to run `docker-compose exec lnd lncli unlock`.
+2. Use the `unlockWallet` method on the `lnRpc` object in your code.
+If you do this, make sure you don't hardcode the wallet password or it might get leaked when you commit it to Version Control.
 
 ## Paying the Invoice
 
