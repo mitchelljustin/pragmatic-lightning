@@ -2,11 +2,19 @@
 layout: home
 ---
 
-Lightning From Scratch is the quickest guide to building an app that accepts Bitcoin Lightning payments.
+{{site.title}} is the quickest guide to building an app that accepts Bitcoin Lightning payments.
   
 After following this guide, you'll be able to build new kinds of apps that leverage the power of Lightning micropayments.
 
+# Why Bitcoin?
+
+- Bitcoin has survived for 10 years
+- Native currency of the Internet
+- Apolitical 
+
 # What is Lightning Network?
+
+--- IMAGE ---
 
 Lightning Network (also known as "Lightning" or "LN") is a second layer on top of the Bitcoin cryptocurrency that makes payments fast, anonymous and cheap.
 With it you can build apps which accept Bitcoin without sacrificing transaction speed, cost or privacy.
@@ -15,12 +23,6 @@ To do this, Lightning Network uses a construct called a payment channel: a "virt
 A network of these payment channels enables payments to be routed between peers that don't necessarily trust each other.
  
 [Read more about how Lightning Network works](https://lightning.engineering/technology.html)
-
-# Why Bitcoin?
-
-- Bitcoin has survived for 10 years
-- Native currency of the Internet
-- Apolitical 
 
 # Getting Started
 
@@ -50,26 +52,31 @@ services:
       - ./lnd_data:/root/.lnd
     command: >
       lnd
+        --debuglevel=info
+        --externalip=0.0.0.0
         --rpclisten=0.0.0.0:10009
         --bitcoin.active
         --bitcoin.testnet
         --bitcoin.node=neutrino
+        --neutrino.connect=faucet.lightning.community
 ```
 
-That's it! You are now running a node on the Lightning test network. 
+That's it! You are now running a node on the Lightning test network.
+It will take a while for the node to sync the entire Bitcoin blockchain, but you can keep reading in the meanwhile.  
+
 Don't worry about losing money: the Lightning test network (testnet) doesn't use real Bitcoins. 
 
-**For those interested: How does my Lightning node communicate with the Bitcoin network?**
+**Sidenote: The Big Bitcoin Blockchain**
 
-Because of how Lightning Network works, a node needs to be able to read from the Bitcoin blockchain and send transactions to it.
-The Lightning node you're running uses a Bitcoin backend called [Neutrino](https://github.com/lightninglabs/neutrino) to achieve this.
+*Because of how Lightning Network works, a node needs to be able to read from the Bitcoin blockchain and send transactions to it.
+The Lightning node you're running uses a Bitcoin backend called [Neutrino](https://github.com/lightninglabs/neutrino) to achieve this.*
 
-Neutrino is a Bitcoin "light client", meaning it doesn't download and verify the whole Bitcoin blockchain but instead only verifies transactions
-relevant to its own wallet. This makes it a lot easier and cheaper to run a node, which is why I use it in this guide. 
+*Neutrino is a Bitcoin "light client", meaning it doesn't download and verify all 200GB+ of the Bitcoin blockchain but instead only verifies transactions
+relevant to its own wallet. This makes it a lot easier and cheaper to run a node, which is why I use it in this guide.*
 
-Neutrino is still early days and potentially insecure. 
+*Neutrino is still early days and potentially insecure. 
 That means that once you migrate off testnet and start handling real money,
-you'll need to run a "full" Bitcoin node that processes and stores every block in the blockchain 
+you'll need to run a "full" Bitcoin node that processes and stores every block in the blockchain.*
 
 ## Build the Weather API
 
@@ -251,7 +258,7 @@ That long response string is the entire invoice encoded in a [special format](ht
 
 Unfortunately, as it stands a user would be unable to pay that invoice. Let's quickly explore why.
 
-## How can a Node get Paid?
+## How does a Node get Paid?
 
 Lightning Network is built up out of a network of payment channels.
 Each of the two sides of a channel has an amount of Bitcoin that they're able to send to the other. 
@@ -262,54 +269,114 @@ Otherwise, the payer would not have enough Bitcoin to send you!
 ![Channels](https://lightning.engineering/images/tech-hiw-2.png)
 <small>Courtesy of [Lightning Labs](https://lightning.engineering/)</small>
 
-In Lightning nomenclature this is called "inbound liquidity", and the lack of it is 
-a tough problem that holds back widespread adoption. A lot of smart people
-are trying to come up with solutions. Time will tell whether they succeed.
+To make sure your Lightning node can be paid, 
+we're going to create a "user" wallet, get some testnet Bitcoins and then open a channel directly with your server node.
 
-To make sure your Lightning node has enough inbound liquidity and can be paid, 
-we're simply going to create a new "user" wallet, get some testnet Bitcoins and then open a channel directly with your node.
+**Sidenote: Inbound Liquidity**
+
+*In Lightning nomenclature the amount of Bitcoin on the other side of your channels is called "inbound liquidity", and the lack of it is 
+a tough problem that holds back widespread adoption. A lot of smart people
+are trying to come up with solutions. Time will tell whether they succeed.*
 
 ## Creating a User Wallet
 
 My recommendation for creating a user wallet is to install the [Zap Desktop Wallet](https://github.com/LN-Zap/zap-desktop#install).
 Using a desktop wallet app makes it easier to distinguish between the "server" wallet and the "client" wallet.
 
-The setup for the Zap desktop wallet is very similar to the one you did earlier with `lncli`. You might have to wait a while
+The setup for the Zap desktop wallet is very similar to the one you did earlier with `lncli`. Again, you'll have to wait a little while (1-10 mins)
 for the wallet to sync with the Bitcoin blockchain.
 
 ![Zap Syncing](./images/zap-syncing.png)
 
-- In the meanwhile, you can start getting testnet BTC
+While it's syncing, let's get some free testnet Bitcoins. (Don't get your hopes up; testnet Bitcoins are not worth any money :)
 
-While it's syncing, it's time to get some free testnet Bitcoins. 
-(Don't get your hopes up; testnet Bitcoins are not worth any money :)
+## Getting Testnet Bitcoins
 
-## Getting some Testnet Bitcoin
-
-The easiest way to get testnet Bitcoins is to use a service that gives out free coins called a "faucet".
+The best way to get testnet Bitcoins is through a "faucet": a service that gives out free coins.
 There's a few of them online, but my favourite is [Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/).
+
+The faucet will ask you for a (Bitcoin) Address. Click "Copy address" on the syncing screen of Zap, or 
+if your wallet is done syncing, the QR icon to the left of your account balance.
+
+Once you click "Send", the transaction will take a while to be confirmed on the test network. 
 
 ## Opening a Channel
 
-- Find node pubkey
-- Use localhost?
-- Open channel with enough satoshi
-- Teach about "lncli -n testnet"
+Now that your user wallet has testnet Bitcoins on it, the time has come to open a channel with your Lightning node.
+
+To do this you'll need to pass two pieces of information to the user wallet: the IP address and the public key of your Lightning node.
+The public key can be found with the `lncli getinfo` command. We pass the `-n testnet` option to specify we are talking about testnet, not mainnet.
+```bash
+$ docker-compose exec lnd lncli -n testnet getinfo
+{
+    "version": "0.6.0-beta commit=basedon-v0.6-beta-dirty",
+    "identity_pubkey": "02716b1bae882f7a24494099d9b0be8c06ed5608bf1bf9de0963c496f3d0c01224",
+    ...
+```
+Here is the public key: the value of "identity_pubkey". 
+The address is once again localhost, but we use a different port this time: `localhost:9735`. 
+
+In Zap, click on the name of your wallet, select "Manage Channels", and click "Create New". 
+Enter "<your_pubkey>@localhost:9735" into the search field, then enter an amount around 0.001 tBTC (or 100,000 tsatoshis),
+ select "Fast" (because we're impatient like that :) and click "Next". This should initiate a channel with your Lightning server node.
+ 
+Once again, it'll take a while for the transaction to be confirmed. But keep reading: we're almost ready to pay the server for a weather report!
 
 ## Paying the Invoice
 
-- curl localhost:8000/weather
-- enter payreq into user wallet, click pay
-- invoice paid! but wait, how to 
+Once your channel is officially opened, you can finally pay the Weather API for a report. Let's get to it.
 
---- GOAL TODAY APR 26 ---
+As a reminder, first ask the Weather API for a report.
 
-## Recording the Payment
+```bash
+$ curl localhost:8000/weather
+lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms```
+```
+  
+Now, click "Pay" in Zap and paste the invoice. Once you click "Send", payment shouldn't take longer than a few seconds.
 
-- +code
-- payment tokens
+Voilá! Your first weather report has been bought and paid for. 
 
+...Actually, you might notice you didn't get the report.
+That's because we haven't written any code to verify the fact that an invoice was paid, and if so to give the report to the user. 
 
+We're going to use one last RPC method to fix that. 
+
+## Verifying the Payment
+
+```javascript
+app.get("/weather", async (req, res) => {
+    const invoiceRHash = req.header("X-Lightning-Invoice")
+    if (invoiceRHash) {
+        const invoice = await lnRpc.lookupInvoice({rHashStr: invoiceRHash})
+        if (invoice && invoice.state === 1) {
+            // Success! User's invoice was paid
+            res.send("Weather report: 15 degrees Celsius, cloudy and with a chance of lightning.")
+        } else {
+            // Error, User is lying about having paid invoice
+            res.status(400).send("Error: Invoice has not been paid")
+        }
+    } else {
+        const invoice = await lnRpc.addInvoice({
+        value: 1, // 1 satoshi == 1/100 million of 1 Bitcoin
+        memo: "Weather report at " + new Date().toString(), // User will see this as description for the payment
+        })
+        res.status(402)
+          .header("X-Lightning-Invoice", invoice.rHash.toString("hex"))
+          .end(invoice.paymentRequest)
+    }
+})
+```
+**Sidenote: User Experience**
+
+*Obviously, this is not how you'd want a user to interact with your app: `curl`ing a URL, 
+pasting the invoice into their app, clicking pay and then `curl`ing again to get the report. Quite the pain for something so banal.*
+
+*To make your app actually usable, I'd recommend either adding a Web UI to your app and using 
+[Lightning Payment URIs](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md#encoding-overview) or 
+[WebLN](https://github.com/joule-labs/webln) to push invoices,
+ or writing a client-side app that handles Lightning payments for the user automatically.* 
+\
 ## Done!
 
 # Migrating to Production
@@ -317,5 +384,7 @@ There's a few of them online, but my favourite is [Yet Another Bitcoin Testnet F
 - Don't put more than $50 USD on node
 - Store cipher seed mnemonic and wallet password in secure place
 - Node needs to be online at all times
-- Change Docker-compose config to bitcoin.mainnet=1 
+- Change lnd config to bitcoin.mainnet=1
+- Move off of using Docker 
 - Run Bitcoin full node (for now) 
+- Write an lnd.conf instead of passing everything by command line
