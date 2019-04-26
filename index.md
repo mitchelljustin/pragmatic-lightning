@@ -110,7 +110,7 @@ Of course you can't actually pay yet. Let's fix that.
 
 ## Initialize your Lightning Wallet
 
-Before the Weather API can get paid, you need to initialize your Lightning wallet: the private key used to control the money on your Lightning node. 
+Before the Weather API can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
 
 To do this we're going to run the `lncli create` command inside Docker and generate a new random private key.
 
@@ -164,7 +164,7 @@ The app needs three pieces of information to connect to the node:
 
 1. Address and port, to locate the node.
 2. TLS certificate, which authenticates the node.
-3. An authentication string called a Macaroon, which enables the app to perform privileged actions like requesting money.  
+3. Macaroon, an authentication string which enables the app to perform privileged actions like requesting money.  
 
 The first one is easy: the node is running locally and exposes the RPC interface on port 10009.
 
@@ -204,9 +204,21 @@ You should get output that looks like this.
 
 Hooray, the app is connected to our Lightning node!
 
+**Note: Unlocking your Wallet**
+
+In the future, you might get an error when calling RPC methods that looks like `Error: 12 UNIMPLEMENTED: unknown service lnrpc.Lightning`.
+
+This is because when a Lightning node starts with a wallet already initialized, it blocks calls to most RPC methods until it's unlocked with the wallet password.
+There are two ways to unlock it, which one you use depends on your needs.
+
+1. Manually execute an `lncli unlock` command after the node starts up and enter the wallet password.
+Remember, in our case you would have to run `docker-compose exec lnd lncli unlock`.
+2. Use the `unlockWallet` method on the `lnRpc` object in your code.
+If you do this, make sure you don't hardcode the wallet password or it might get leaked when you commit it to Version Control.
+
 ## Generate a Lightning Invoice
 
-To charge money for the `/weather` API call we need to generate a request for a Bitcoin Lightning payment, called an invoice.
+To charge money for the `/weather` API call we need to generate a request for a Bitcoin Lightning payment. In Lightning-land this is called an "invoice".
 
 Lightning's RPC interface exposes a method called [`addInvoice`](https://api.lightning.community/#addinvoice) that does just that.
 Let's change the route handler to use it. 
@@ -230,18 +242,6 @@ lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzar
 ```
 
 That long response string is the entire invoice encoded in a [special format](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md), which the user enters it into their Lightning wallet to pay. 
-
-**Note: Unlocking your Wallet**
-
-In the future, you might get an error when calling RPC methods that looks like `Error: 12 UNIMPLEMENTED: unknown service lnrpc.Lightning`.
-
-This is because when a Lightning node starts with a wallet already initialized, it blocks calls to most RPC methods until it's unlocked with the wallet password.
-There are two ways to unlock it, which one you use depends on your needs.
-
-1. Manually execute an `lncli unlock` command after the node starts up and enter the wallet password.
-Remember, in our case you would have to run `docker-compose exec lnd lncli unlock`.
-2. Use the `unlockWallet` method on the `lnRpc` object in your code.
-If you do this, make sure you don't hardcode the wallet password or it might get leaked when you commit it to Version Control.
 
 ## Paying the Invoice
 
