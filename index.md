@@ -110,7 +110,7 @@ Uh oh! You need to pay first.
 
 Of course you can't actually pay yet. Let's fix that.
 
-## Run a Lightning Node
+## Run a Lightning node
 
 To accept Lightning payments, first we need to run a node on the Lightning Network.
 For this guide we'll be using the [`lnd`](https://github.com/lightningnetwork/lnd) Lightning node implementation, written in Go.
@@ -367,7 +367,7 @@ are trying to come up with solutions. Time will tell whether they succeed.*
 
 ## Pay the request
 
-Once your channel is officially opened, you can finally pay the Weather API for a report. Let's get to it.
+Once your channel is officially opened, you can finally pay the Weather API for a report.
 
 As a reminder, first ask the Weather API for a report.
 
@@ -380,19 +380,17 @@ Now, click "Pay" in Zap and paste the invoice. Once you click "Send", payment sh
 
 Voilá! Your first weather report has been bought and paid for. 
 
-...Actually, you might notice you didn't get the report.
-That's because we haven't written any code to verify the fact that an invoice was paid, and if so to give the report to the user. 
-
-We're going to use one last RPC method to fix that. 
+Actually, you might notice you didn't get the report.
+That's because we haven't written any code to verify the fact that a report was paid for, and if so to send it to the user. 
 
 ## Verify payment on the server
 
-Need to do three things:
-1. Generate unique purchase token for each purchase
-2. Mark purchases as completed by subscribing for paid invoices
-3. Send report after verifying purchase 
+To verify the purchase of a report we need to do three things:
+1. Generate unique token for each new purchase
+2. Read invoices as they come in and mark their corresponding purchases as paid
+3. Send report to users who have paid only 
 
-For step 1, let's add the `uuid` package to our project
+To make it simple we're using UUIDs as purchase tokens. Add the `uuid` package to your project. 
 ```bash
 $ yarn add uuid
 ```
@@ -402,7 +400,7 @@ Require it at the top of `index.js`
 const uuid = require("uuid")
 ```
 
-On `/weather` API call, generate a new UUID to use as a purchase token. Include it in the invoice memo so that we can
+On a `/weather` API call, generate a new UUID to use as purchase token. Include it in the invoice memo so that we can
 mark it as paid later by reading invoices.
 
 ```javascript
@@ -410,7 +408,7 @@ app.get("/weather", async (req, res) => {
     const purchaseToken = uuid.v4()
     const invoice = await lnRpc.addInvoice({
         value: 1, // 1 satoshi == 1/100 millionth of 1 Bitcoin
-        memo: `Weather report at ${new Date().toString()} // ${purchaseToken}`,
+        memo: `Weather report at ${new Date().toString()} || ${purchaseToken}`,
     })
     res.status(402)
         .header("X-Purchase-Token", purchaseToken)
@@ -419,20 +417,20 @@ app.get("/weather", async (req, res) => {
 ```
 
 We need to keep track of which purchase tokens have been paid and which haven't.
-The last RPC method we're going to use is called [`subscribeInvoies`](https://api.lightning.community/#subscribeinvoices).
+The RPC method we're going to use for this is [`subscribeInvoices`](https://api.lightning.community/#subscribeinvoices).
 
 ```javascript
-const hasBeenPaid = {} // You should use a real database
+const hasBeenPaid = {} // You should use a real database instead
 const invoiceStream = await lnRpc.subscribeInvoices()
 invoiceStream.on("data", (invoice) => {
     if (invoice.state === 1) { // State 1 means settled i.e. paid
-        const purchaseToken = invoice.memo.split("//")[1].trim()
+        const purchaseToken = invoice.memo.split("||")[1].trim()
         hasBeenPaid[purchaseToken] = true
     }
 })
 ```
 
-Finally, tie it all together by checking for the `X-Purchase-Token` header and returning the report if the header is a valid, paid purchase token.
+Finally, tie it all together by checking for the `X-Purchase-Token` request header and returning the report if the header is a valid, paid purchase token.
 
 ```javascript
 app.get("/weather", async (req, res) => {
@@ -447,7 +445,7 @@ app.get("/weather", async (req, res) => {
         const purchaseToken = genPaymentToken()
         const invoice = await lnRpc.addInvoice({
             value: 1, // 1 satoshi == 1/100 millionth of 1 Bitcoin
-            memo: `Weather report at ${new Date().toString()} // ${purchaseToken}`,
+            memo: `Weather report at ${new Date().toString()} || ${purchaseToken}`,
         })
         res.status(402)
             .header("X-Purchase-Token", purchaseToken)
@@ -456,7 +454,7 @@ app.get("/weather", async (req, res) => {
 })
 ```
 
-Let's test it. Note we have to use the `curl -v` option to obtain the `X-Purchase-Token` header.
+Let's test it. Note we use the `curl -v` option to obtain the `X-Purchase-Token` header.
 ```bash
 $ curl -v localhost:8000/weather
 ...
@@ -474,33 +472,47 @@ $ curl -v localhost:8000/weather
 lntb10n1pwvwjjjpp5fnrkz0sa830s8lqza8tdflwqr8s6cegvqkmy60a44qfc79t5fh4qd9c2ajkzargv4ezqun9wphhyapqv96zqnt0dcsyzurjyqerjgpjxqcnjgp3x5arqv36xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effyqhj7gryxsenjdpe89nz6v3nxa3z6dr9xguz6wtxvvej6ep38q6ngvf5x33k2ep5cqzpg6rk3card20ca5j3p0x70waz3xa6y4zjjp8e9m0wd8356850hkcuklmpfvmkluz8y0l2yer74j5ja3ar5grej6mjk6d262etwpv3mcxcppxkr6d
 ```
 
-We see the purchase token as well as the Lightning invoice. Enter the invoice into the user's wallet and pay it, then re-call the API with the now paid purchase token.
+We see the purchase token as well as the Lightning invoice. Enter the invoice into the user's wallet and pay it, then re-call the API with the same purchase token.
 
 ```bash
 $ curl localhost:8000/weather -H X-Purchase-Token:d439499f-237b-4e28-9fc3-d1854144ced4
 Weather report: 15 degrees Celsius, cloudy and with a chance of Lightning.
 ```
 
+## Done!
+
+You've successfully built a Lightning app from scratch and without prior knowledge. Congrats!
+
+[Here's the complete `index.js` (only 47 lines :).](./index.js)
+
+The next step is to move your app off of Lightning testnet and onto production where you can get paid with real money.
+Jump into the following section if this interests you.
+
 **Sidenote: User Experience**
 
 *Obviously, this is not how you'd want a user to interact with your app: `curl`ing a URL, 
 pasting the invoice into their app, clicking pay and then `curl`ing again to get the report. Quite the pain for something so banal.*
 
-*To make your app actually usable, I'd recommend either adding a Web UI to your app and using 
+*To make your app more user-friendly, I'd recommend either adding a Web UI to your app and using 
 [Lightning Payment URIs](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md#encoding-overview) or 
 [WebLN](https://github.com/joule-labs/webln) to push invoices,
  or writing a client-side app that handles Lightning payments for the user automatically.* 
 
-## Done!
-
-We've successfully built a Lightning app from scratch and without prior knowledge. 
-
 # Migrating to Production
 
-- Don't put more than $50 USD on node
-- Store cipher seed mnemonic and wallet password in secure place
-- Node needs to be online at all times
-- Change lnd config to bitcoin.mainnet=1
-- Move off of using Docker 
+## Move to mainnet
+
 - Run Bitcoin full node (for now) 
+- Change lnd config to bitcoin.mainnet=1
+- Generate new cipher seed mnemonic and store in secure place
+- Use a secure wallet password this time
+- Get some real Bitcoin on an exchange or OTC
+
+## Secure your server
+- Practice good user hygiene on your Linux box
+- Update LND when a new version comes out to fix security bugs 
+
+## Follow best practices
 - Write an lnd.conf instead of passing everything by command line
+- Don't put more than $50 USD on node
+- Move off of using Docker 
