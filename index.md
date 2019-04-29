@@ -11,13 +11,21 @@ layout: home
 
 {{site.title}} is a guide for building an app that accepts Bitcoin payments on the Lightning Network.
 
-Unlike other guides, {{site.title}} focuses on getting a fully functional Lightning app with the lowest amount of time and effort.  
+Unlike other guides, {{site.title}} focuses on getting a fully functional Lightning app with the lowest amount of time and effort.
+
+The whole guide shouldn't take you more than 2 hours.
+
+**Example Lightning applications**
+- A VPN that charges by the hour
+- A micropayment tipping bot for Twitter
+- A service that sells AI training data by the Megabyte
+- A cloud service provider that doesn't require identification  
 
 **You should follow this guide if you..**
 
 - Want to build a Bitcoin app but hesitate because transactions are slow, expensive and/or not private.
-- Have heard of Lightning Network and want to learn about it by building.
-- Tried to follow other guides but failed to get an app off the ground because they were too complex.
+- Have heard of Lightning Network and want to learn by building on it.
+- Tried to follow other guides but gave up because they were too complex.
 
 **After following this guide, you will..**
 
@@ -37,7 +45,7 @@ Unlike other guides, {{site.title}} focuses on getting a fully functional Lightn
 ## Why Bitcoin?
 
 While there are other cryptocurrencies you could build on, I believe Bitcoin is currently still the best option.
-It has a proven 10+ year track record of not getting hacked, or politically subverted.
+It has a proven 10+ year track record of not getting hacked or politically subverted.
 As a result it has the most liquid market, the most stable price and the best brand recognition.
 
 In short, Bitcoin is shaping up to be the true native currency of the Internet. 
@@ -55,11 +63,11 @@ Unlike traditional Bitcoin payments, payments on Lightning Network are extremely
 
 It uses a construct called a payment channel: a "virtual money tube" between two peers.
 A network of these channels plus special Bitcoin scripts called [HTLCs](https://en.bitcoin.it/wiki/Hash_Time_Locked_Contracts) 
-enables payments to be routed through peers that don't have to trust each other.
+enables payments to be routed through peers that don't have to trust each other. [Read more about the underlying technology](https://lightning.engineering/technology.html).
 
-Lightning Network is still experimental and should not be used with large amounts of money.  
- 
-[Read more about the underlying technology](https://lightning.engineering/technology.html)
+Lightning Network is still at an early stage. 
+Its interface is still in flux, and there aren't accepted standards on how to do interact with it yet from an app's perspective.
+This guide follows the best currently known practices, but these are subject to change in the future.   
 
 # The Rain Report app
 
@@ -120,6 +128,8 @@ To make this easy I use [Docker](https://www.docker.com/products/docker-desktop)
 1. Paste the underlying code into a file called `docker-compose.yml`
 1. Run `docker-compose up`
 
+[(docker-compose.yml can also be found here)](./docker-compose.yml)
+
 ```yaml
 version: "3.7"
 
@@ -143,14 +153,14 @@ services:
 ```
 
 That's it! You are now running a node on the Lightning test network.
-It will take a while for the node to sync the entire Bitcoin blockchain, but you can keep reading in the meanwhile.  
+It will take some time for the node to sync to the Bitcoin blockchain, but you can keep reading in the meanwhile.  
 
 Don't worry about losing money: the Lightning test network (testnet) doesn't use real Bitcoins. 
 
 **Sidenote: The Big Bitcoin Blockchain**
 
 *Because of how Lightning Network works, a node needs to be able to read from the Bitcoin blockchain and send transactions to it.
-The Lightning node you're running uses a Bitcoin backend called [Neutrino](https://github.com/lightninglabs/neutrino) to achieve this.*
+To achieve this, the Lightning node you're running uses a Bitcoin backend called [Neutrino](https://github.com/lightninglabs/neutrino).*
 
 *Neutrino is a Bitcoin "light client", meaning it doesn't download and verify all 200GB+ of the Bitcoin blockchain but instead only verifies transactions
 relevant to its own wallet. This makes it a lot easier and cheaper to run a node, which is why I use it in this guide.*
@@ -161,17 +171,16 @@ you'll need to run a "full" Bitcoin node that processes and stores every block i
 
 ## Initialize your Lightning Wallet
 
-Before the Weather API can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
+Before your app can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
 
-To do this we're going to run the `lncli create` command inside Docker and generate a new random private key.
+To do this, we'll run the `lncli create` command inside the Docker container and generate a new random private key.
 
-Since we're running on testnet the password doesn't need to be secure.
-Of course, if you run on mainnet you need a secure password or your money might get stolen. 
+Since the app is on testnet, security isn't that important: you can pick a simple 8-character wallet password like "satoshi7".
 
 ```bash
 $ docker-compose exec lnd lncli create
-Input wallet password: (satoshi7)
-Confirm wallet password: (satoshi7)
+Input wallet password: satoshi7
+Confirm wallet password: satoshi7
 
 Do you have an existing cipher seed mnemonic you want to use? (Enter y/n): n
 
@@ -180,17 +189,21 @@ Input your passphrase if you wish to encrypt it (or press enter to proceed witho
 
 Generating fresh cipher seed...
 ```
+The command will print out your "cipher seed mnemonic": 24 English words that map one-to-one to your generated private key.
+You can ignore this for now and move on to the next section. 
 
-You should get a printout of your "cipher seed mnemonic": 24 words that map one-to-one to your generated private key. 
+**Sidenote: Staying secure**
 
-Don't worry about saving this right now. But when you migrate to mainnet, you need to store the mnemonic in a secure place, like in 1Password or on a piece of paper.
+*When you migrate to mainnet, You'll need to generate a new mnemonic and store in a secure place, like in 1Password or on a piece of paper.
+You should also use a different, secure password or your money might get stolen.*
 
-Your Lightning node is now initialized and ready to go! Time to connect the Weather API to it. 
+*Please make sure you don't lose either your password or your mnemonic. 
+Unlike traditional payment methods such as Stripe or Paypal, with Bitcoin/Lightning there's no one to bail you out if you lose them.*
 
-## Connect your web app to Lightning
+## Connect web app to Lightning node
 
 An app communicates with a Lightning node using an RPC protocol called [`grpc`](https://grpc.io/).   
-The Node package we'll be using for this is called `@radar/lnrpc`. Let's install it.
+The Node package we'll be using for this is called `@radar/lnrpc`.
 ```bash
 $ yarn add @radar/lnrpc
 ```
@@ -226,7 +239,7 @@ const lnRpc = await connectToLnNode({
 })
 ```
 
-We will use files from the `lnd_data/` directory used by `lnd` to fill the last two: TLS certificate and Macaroon.  
+`lnd` generates the last two as files: `tls.cert` and `admin.macaroon`. They're in the `lnd_data/` directory, so we write:  
 
 ```javascript
 const lnRpc = await connectToLnNode({
@@ -253,19 +266,18 @@ You should get output that looks like this.
   ... }
 ```
 
-Hooray, the app is connected to our Lightning node!
-
 **Sidenote: Unlocking your Wallet**
 
-In the future, you might get an error when calling RPC methods that looks like `Error: 12 UNIMPLEMENTED: unknown service lnrpc.Lightning`.
+*In the future, you might get an error when calling RPC methods that looks like `Error: 12 UNIMPLEMENTED: unknown service lnrpc.Lightning`.*
 
-This is because when a Lightning node starts with a wallet already initialized, it blocks calls to most RPC methods until it's unlocked with the wallet password.
-There are two ways to unlock it, which one you use depends on your needs.
+*This is because when a Lightning node restarts with a wallet already initialized, it blocks calls to most RPC methods until it's unlocked with the wallet password.
+There are two ways to unlock it, which one you should use depends on your needs.*
 
-1. Manually execute an `lncli unlock` command after the node starts up and enter the wallet password.
-Remember, in our case you would have to run `docker-compose exec lnd lncli unlock`.
-2. Use the `unlockWallet` method on the `lnRpc` object in your code.
-If you do this, make sure you don't hardcode the wallet password or it might get leaked when you commit it to Version Control.
+*1. Manually execute an `lncli unlock` command after the node starts up and enter the wallet password.
+Remember, in our case you would have to run `docker-compose exec lnd lncli unlock`.*
+
+*2. Use the `unlockWallet` method on `lnRpc` in your code.
+If you do this, make sure you don't hardcode the wallet password or it might get leaked when you commit it to Version Control.*
 
 ## Generate a payment request
 
@@ -292,29 +304,13 @@ $ curl localhost:8000/weather
 lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms```
 ```
 
-That long response string is the entire invoice encoded in a [special format](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md), which the user enters it into their Lightning wallet to pay. 
+That long response string is the entire invoice encoded in a [special format](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md), which the user enters it into their Lightning wallet to pay.
 
-Unfortunately, as it stands a user would be unable to pay that invoice. Let's quickly explore why.
-
-## Understand how a node gets paid
-
-Lightning Network is built up out of a network of payment channels.
-Each of the two sides of a channel has an amount of Bitcoin that they're able to send to the other. 
-
-For your Lightning node to be paid, it needs to have payment channels with enough balance on the other side of them.
-Otherwise, the payer would not have enough Bitcoin to send you!
-
-![Channels](https://lightning.engineering/images/tech-hiw-2.png)
-<small>Courtesy of [Lightning Labs](https://lightning.engineering/)</small>
-
-To make sure your Lightning node can be paid, 
-we're going to set up a "user" wallet, get some testnet Bitcoins and then open a channel directly with your server node.
-
-In production, both you and the user would likely open a channel with a well-connected hub and route payments through it instead.
+We don't have a user wallet yet, so let's set one up.
 
 ## Set up a user wallet
 
-To set up the user wallet, we will install the [Zap Desktop Wallet](https://github.com/LN-Zap/zap-desktop#install).
+To set up a user wallet, we will install the [Zap Desktop Wallet](https://github.com/LN-Zap/zap-desktop#install).
 Using a desktop wallet app makes it easier to distinguish between the "server" wallet and the "user" wallet, and it provides a nice
 graphical interface.
 
@@ -339,8 +335,8 @@ Once you click "Send", the transaction will take a while to be confirmed on the 
 
 Now that your user wallet has testnet Bitcoins on it, the time has come to open a channel with your Lightning node.
 
-To do this you'll need to pass two pieces of information to the user wallet: the IP address and the public key of your Lightning node.
-The public key can be found with the `lncli getinfo` command. We pass the `-n testnet` option to specify we are talking about testnet, not mainnet.
+You'll need to pass two pieces of information to the user wallet: the IP address and the public key of your Lightning node.
+The public key can be found with the `lncli getinfo` command. Pass the `-n testnet` option to specify you're talking about testnet.
 ```bash
 $ docker-compose exec lnd lncli -n testnet getinfo
 {
@@ -348,14 +344,21 @@ $ docker-compose exec lnd lncli -n testnet getinfo
     "identity_pubkey": "02716b1bae882f7a24494099d9b0be8c06ed5608bf1bf9de0963c496f3d0c01224",
     ...
 ```
-Here is the public key: the value of "identity_pubkey". 
-The address is once again localhost, but we use a different port this time: `localhost:9735`. 
+Here is the public key: the value of "identity_pubkey". Copy it.
 
-In Zap, click on the name of your wallet, select "Manage Channels", and click "Create New". 
-Enter "<YOUR_PUBKEY>@localhost:9735" into the search field, then enter an amount around 0.001 tBTC (or 100,000 tsatoshis),
- select "Fast" (because we're impatient like that :) and click "Next". This will create a channel with your Lightning server node.
+The address is once again localhost, but we use a different port 9735 this time. 
+
+In Zap, 
+- Click on the name of your wallet in the top right
+- Select "Manage Channels", and click "Create New"
+- Enter `<YOUR_PUBKEY>@localhost:9735` into the search field
+- Enter an amount around 0.001 tBTC (or 100,000 tsatoshis)
+- Select "Fast" (because we're impatient like that :)
+- Click "Next" and "Open Channel" 
+
+This will create a channel with your Lightning server node.
  
-It'll take a while for the transaction to be confirmed and the channel to be opened. But keep reading: we're almost ready to pay the server for a weather report!
+It'll take a while for the transaction to be confirmed and the channel to be opened. You can grab a coffee or something in the meanwhile.
 
 **Sidenote: Inbound Liquidity**
 
@@ -363,13 +366,15 @@ It'll take a while for the transaction to be confirmed and the channel to be ope
 a tough problem that holds back widespread adoption. A lot of smart people
 are trying to come up with solutions. Time will tell whether they succeed.*
 
+*In the real world, both you and the user would likely open a channel with a well-connected hub to route payments as opposed to opening a direct channel.*
+
 *--- SOME MORE STUFF ABOUT LIQUIDITY TO KEEP READER BUSY ---*
 
 ## Pay the request
 
-Once your channel is officially opened, you can finally pay the Weather API for a report.
+Once your channel is officially opened, you can finally purchase a weather report from your API.
 
-As a reminder, first ask the Weather API for a report.
+As a reminder, first fire off a request.
 
 ```bash
 $ curl localhost:8000/weather
@@ -380,14 +385,14 @@ Now, click "Pay" in Zap and paste the invoice. Once you click "Send", payment sh
 
 Voilá! Your first weather report has been bought and paid for. 
 
-Actually, you might notice you didn't get the report.
+Actually, you might notice you didn't get a report.
 That's because we haven't written any code to verify the fact that a report was paid for, and if so to send it to the user. 
 
-## Verify payment on the server
+## Verify purchases on the server
 
 To verify the purchase of a report we need to do three things:
-1. Generate unique token for each new purchase
-2. Read invoices as they come in and mark their corresponding purchases as paid
+1. Generate a unique token for each new purchase along with an invoice
+2. Read paid invoices as they come in and mark their corresponding purchase tokens as paid
 3. Send report to users who have paid only 
 
 To make it simple we're using UUIDs as purchase tokens. Add the `uuid` package to your project. 
@@ -430,7 +435,7 @@ invoiceStream.on("data", (invoice) => {
 })
 ```
 
-Finally, tie it all together by checking for the `X-Purchase-Token` request header and returning the report if the header is a valid, paid purchase token.
+Finally, tie it all together by checking for a `X-Purchase-Token` request header and returning the report if the header is a valid, paid purchase token.
 
 ```javascript
 app.get("/weather", async (req, res) => {
@@ -483,7 +488,7 @@ Weather report: 15 degrees Celsius, cloudy and with a chance of Lightning.
 
 You've successfully built a Lightning app from scratch and without prior knowledge. Congrats!
 
-[Here's the complete `index.js` (only 47 lines :).](./index.js)
+[Here's the complete `index.js` (only 47 lines :).](https://github.com/mvanderh/pragmatic-lightning/blob/master/index.js)
 
 The next step is to move your app off of Lightning testnet and onto production where you can get paid with real money.
 Jump into the following section if this interests you.

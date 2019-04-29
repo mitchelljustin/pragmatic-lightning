@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  lnd:
+    image: btcpayserver/lnd:v0.6-beta
+    ports:
+      - "9735:9735"
+      - "10009:10009"
+    volumes:
+      - ./lnd_data:/root/.lnd
+    command: >
+      lnd
+        --debuglevel=info
+        --externalip=0.0.0.0
+        --rpclisten=0.0.0.0:10009
+        --bitcoin.active
+        --bitcoin.testnet
+        --bitcoin.node=neutrino
+        --neutrino.connect=faucet.lightning.community
