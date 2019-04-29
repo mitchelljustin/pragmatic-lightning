@@ -2,15 +2,26 @@
 layout: home
 ---
 
+# {{site.title}}
+
 {{site.title}} is the quickest guide to building an app that accepts Bitcoin Lightning payments.
   
 After following this guide, you'll be able to build new kinds of apps that leverage the power of Lightning micropayments.
 
-# Why Bitcoin?
+## Why Bitcoin?
 
 - Bitcoin has survived for 10 years
 - Native currency of the Internet
 - Apolitical 
+
+## Why follow this guide?
+
+TODO
+
+# Table of Contents
+
+1. The generated Toc will be an ordered list
+{:toc}
 
 # What is Lightning Network?
 
@@ -24,7 +35,7 @@ A network of these payment channels enables payments to be routed between peers 
  
 [Read more about how Lightning Network works](https://lightning.engineering/technology.html)
 
-# Getting Started
+# The Guide
 
 In this guide we're going to build a NodeJS + ExpressJS example web app called Rain Report, which sells weather reports for Lightning micropayments.
 
@@ -78,7 +89,7 @@ relevant to its own wallet. This makes it a lot easier and cheaper to run a node
 That means that once you migrate off testnet and start handling real money,
 you'll need to run a "full" Bitcoin node that processes and stores every block in the blockchain.*
 
-## Build the Weather API
+## Create an empty web app
 
 Now it's time to create the Weather API. Start a new NodeJS/ExpressJS project.
 
@@ -149,7 +160,7 @@ Don't worry about saving this right now. But when you migrate to mainnet, you ne
 
 Your Lightning node is now initialized and ready to go! Time to connect the Weather API to it. 
 
-## Connect your Web App to Lightning
+## Connect your web app to Lightning
 
 An app communicates with a Lightning node using an RPC protocol called [`grpc`](https://grpc.io/).   
 The Node package we'll be using for this is called `@radar/lnrpc`. Let's install it.
@@ -258,7 +269,7 @@ That long response string is the entire invoice encoded in a [special format](ht
 
 Unfortunately, as it stands a user would be unable to pay that invoice. Let's quickly explore why.
 
-## How does a Node get Paid?
+## Understand how the Node gets paid
 
 Lightning Network is built up out of a network of payment channels.
 Each of the two sides of a channel has an amount of Bitcoin that they're able to send to the other. 
@@ -278,7 +289,7 @@ we're going to create a "user" wallet, get some testnet Bitcoins and then open a
 a tough problem that holds back widespread adoption. A lot of smart people
 are trying to come up with solutions. Time will tell whether they succeed.*
 
-## Creating a User Wallet
+## Create a User Wallet
 
 My recommendation for creating a user wallet is to install the [Zap Desktop Wallet](https://github.com/LN-Zap/zap-desktop#install).
 Using a desktop wallet app makes it easier to distinguish between the "server" wallet and the "client" wallet.
@@ -290,7 +301,7 @@ for the wallet to sync with the Bitcoin blockchain.
 
 While it's syncing, let's get some free testnet Bitcoins. (Don't get your hopes up; testnet Bitcoins are not worth any money :)
 
-## Getting Testnet Bitcoins
+## Get Testnet Bitcoins
 
 The best way to get testnet Bitcoins is through a "faucet": a service that gives out free coins.
 There's a few of them online, but my favourite is [Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/).
@@ -300,7 +311,7 @@ if your wallet is done syncing, the QR icon to the left of your account balance.
 
 Once you click "Send", the transaction will take a while to be confirmed on the test network. 
 
-## Opening a Channel
+## Open a Channel
 
 Now that your user wallet has testnet Bitcoins on it, the time has come to open a channel with your Lightning node.
 
@@ -317,12 +328,12 @@ Here is the public key: the value of "identity_pubkey".
 The address is once again localhost, but we use a different port this time: `localhost:9735`. 
 
 In Zap, click on the name of your wallet, select "Manage Channels", and click "Create New". 
-Enter "<your_pubkey>@localhost:9735" into the search field, then enter an amount around 0.001 tBTC (or 100,000 tsatoshis),
- select "Fast" (because we're impatient like that :) and click "Next". This should initiate a channel with your Lightning server node.
+Enter "<YOUR_PUBKEY>@localhost:9735" into the search field, then enter an amount around 0.001 tBTC (or 100,000 tsatoshis),
+ select "Fast" (because we're impatient like that :) and click "Next". This will create a channel with your Lightning server node.
  
 Once again, it'll take a while for the transaction to be confirmed. But keep reading: we're almost ready to pay the server for a weather report!
 
-## Paying the Invoice
+## Pay the Invoice
 
 Once your channel is officially opened, you can finally pay the Weather API for a report. Let's get to it.
 
@@ -342,13 +353,13 @@ That's because we haven't written any code to verify the fact that an invoice wa
 
 We're going to use one last RPC method to fix that. 
 
-## Verifying the Payment
+## Verify the Payment
 
 ```javascript
 app.get("/weather", async (req, res) => {
-    const invoiceRHash = req.header("X-Lightning-Invoice")
-    if (invoiceRHash) {
-        const invoice = await lnRpc.lookupInvoice({rHashStr: invoiceRHash})
+    const invoiceId = req.header("X-Lightning-Invoice")
+    if (invoiceId) {
+        const invoice = await lnRpc.lookupInvoice({rHashStr: invoiceId})
         if (invoice && invoice.state === 1) { // Invoice state "1" means it was settled (i.e. paid)
             res.send("Weather report: 15 degrees Celsius, cloudy and with a chance of lightning.")
         } else {
