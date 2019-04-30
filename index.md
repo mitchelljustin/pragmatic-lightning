@@ -13,23 +13,23 @@ layout: home
 
 Unlike other guides, {{site.title}} focuses on getting a fully functional Lightning app with the lowest amount of time and effort.
 
-The whole guide shouldn't take you more than 2 hours.
+The whole guide shouldn't take more than 2 hours.
 
-**Example Lightning applications**
+**Things you can build include..**
 - A VPN that charges by the hour
 - A micropayment tipping bot for Twitter
 - A service that sells AI training data by the Megabyte
 - A cloud service provider that doesn't require identification  
 
-**You should follow this guide if you..**
+**This guide is for anyone who..**
 
-- Want to build a Bitcoin app but hesitate because transactions are slow, expensive and/or not private.
-- Have heard of Lightning Network and want to learn by building on it.
-- Tried to follow other guides but gave up because they were too complex.
+- Wants to build a Bitcoin app but hesitate because transactions are slow, expensive and/or not private.
+- Has heard of Lightning Network and want to learn by building on it.
+- Has tried to follow other guides but gave up because they were too complex.
 
-**After following this guide, you will..**
+**This guide will help you..**
 
-- Have built a fully-functional app that accepts Lightning Network payments.
+- Build a fully-functional app that accepts Lightning Network payments.
 - Understand roughly what Lightning Network is, how it works and how to build on it.
 - Become more familiar with Lightning wallet and node software.
 
@@ -48,7 +48,7 @@ While there are other cryptocurrencies you could build on, I believe Bitcoin is 
 It has a proven 10+ year track record of not getting hacked or politically subverted.
 As a result it has the most liquid market, the most stable price and the best brand recognition.
 
-In short, Bitcoin is shaping up to be the true native currency of the Internet. 
+So far, Bitcoin is shaping up to be a true native currency for the Internet. 
 
 From a developer standpoint, the biggest downside of Bitcoin is that transactions are slow and expensive. 
 The Lightning Network fixes this flaw by adding a new layer on top of Bitcoin.
@@ -69,9 +69,9 @@ Lightning Network is still at an early stage.
 Its interface is still in flux, and there aren't accepted standards on how to do interact with it yet from an app's perspective.
 This guide follows the best currently known practices, but these are subject to change in the future.   
 
-# The Rain Report app
+# Building the App
 
-In this guide we're going to build a NodeJS + ExpressJS example web app called Rain Report, which sells weather reports for Lightning micropayments.
+In this guide we're going to build a NodeJS + ExpressJS example web app which sells weather reports for Lightning micropayments called Rain Report.
 
 ## Create a web app
 
