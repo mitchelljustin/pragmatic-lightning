@@ -8,4 +8,6 @@ plugins:
   - jekyll-seo-tag
 exclude:
   - .idea
-  - rain-report/
+  - rain-report/node_modules
+  - rain-report/bitcoind_data
+  - rain-report/lnd_data
