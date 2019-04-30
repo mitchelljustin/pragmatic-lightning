@@ -83,7 +83,7 @@ $ yarn init
 $ yarn add express
 ```
 
-Add a file `index.js` which will contain our entire web app.
+Add a file "index.js" which will contain our entire web app.
 
 ```javascript
 const express = require("express")
@@ -120,13 +120,13 @@ Of course you can't actually pay yet. Let's fix that.
 ## Start Lightning node
 
 To accept Lightning payments, first we need to run a node on the Lightning Network.
-For this guide we'll be using the [`lnd`](https://github.com/lightningnetwork/lnd) Lightning node implementation, written in Go.
+For this guide we'll be using the [LND](https://github.com/lightningnetwork/lnd) Lightning node implementation, written in Go.
 
 **Note:** Don't worry about losing money: the Lightning node will run on the test network (testnet), which doesn't use real Bitcoins. 
  
 To make this easy we use [Docker](https://www.docker.com/products/docker-desktop). 
 
-1. Paste the underlying code into a file called `docker-compose.yml`. [(Direct link)](rain-report/docker-compose.yml)
+1. Paste the underlying code into a file called "docker-compose.yml". [(Direct link)](rain-report/docker-compose.yml)
 1. Run `docker-compose up`
 
 ```yaml
@@ -161,7 +161,7 @@ It will take some time (1-10 mins) for the node to sync to the Bitcoin blockchai
 To achieve this, the Lightning node you're running uses a Bitcoin backend called [Neutrino](https://github.com/lightninglabs/neutrino).*
 
 *Neutrino is a Bitcoin "light client", meaning it doesn't download and verify all 200GB+ of the Bitcoin blockchain but instead only verifies transactions
-relevant to its own wallet. This makes it a lot easier and cheaper to run a node, which is why I use it in this guide.*
+relevant to its own wallet. This makes it a lot easier and cheaper to run a node, which is why this guide uses it.*
 
 *Neutrino is still early days and potentially insecure. 
 That means that once you migrate off testnet and start handling real money,
@@ -206,7 +206,7 @@ The Node package we'll be using for this is called `@radar/lnrpc`.
 $ yarn add @radar/lnrpc
 ```
 
-In `index.js`,
+In "index.js",
 ```javascript
 const express = require("express")
 const connectToLnNode = require("@radar/lnrpc")
@@ -237,7 +237,7 @@ const lnRpc = await connectToLnNode({
 })
 ```
 
-`lnd` generates the last two as files: `tls.cert` and `admin.macaroon`. They're in the `lnd_data/` directory, so we write:  
+LND generates the last two as files: `tls.cert` and `admin.macaroon`. They're in the `lnd_data/` directory, so we write:  
 
 ```javascript
 const lnRpc = await connectToLnNode({
@@ -404,7 +404,7 @@ To make it simple we're using UUIDs as purchase tokens. Add the `uuid` package t
 $ yarn add uuid
 ```
 
-Require it at the top of `index.js`
+Require it at the top of "index.js"
 ```javascript
 const uuid = require("uuid")
 ```
@@ -509,18 +509,84 @@ pasting the invoice into their app, clicking pay and then `curl`ing again to get
 
 # Migrating to Production
 
-## Move to mainnet
+Let's make some real money.
 
-- Run Bitcoin full node (for now) 
-- Change lnd config to bitcoin.mainnet=1
-- Generate new cipher seed mnemonic and store in secure place
-- Use a secure wallet password this time
-- Get some real Bitcoin on an exchange or OTC
-- Use production docker-compose
+## Switch to mainnet
+
+For an app to accept real Bitcoins, the Lightning node it talks to needs to run on mainnet. 
+
+In the future this will be as easy as adding the `--bitcoin.mainnet` config flag to your "docker-compose.yml".
+
+Unfortunately as of now (Apr 30, 2019) the Neutrino Bitcoin node used in this guide is still experimental, 
+and thus LND won't allow you to use it on mainnet where money could be lost.
+Therefore you need to run a full Bitcoin node which downloads and verifies the whole 200GB+ blockchain.
+
+There are two ways to do this:
+ 
+1. Write a "docker-compose.yml" for production which includes a full Bitcoin node.
+1. Install and run the node daemons manually on your local machine, not via Docker.
+
+For both options you need at least 500GB of disk space so that you can store the full Bitcoin blockchain now and well into the future.
+Make sure of this when you set up your app on a cloud service like Digital Ocean or AWS. 
+
+**Docker-compose.yml for production**
+
+I've written a ["production" docker-compose.yml file](./rain-report/docker-compose.production.yml) 
+that includes Docker containers for both the mainnet Bitcoin node and the mainnet Lightning node,
+and connects them to each other. 
+
+I also included a container and Dockerfile for the web app that sets convenient environment variables for the app to connect to Lightning.
+You can find all this code in [the Rain Report project folder](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report).
+
+To use the production docker-compose.yml, run
+ 
+```bash
+$ curl -O https://mvanderh.github.io/pragmatic-lightning/rain-report/docker-compose.production.yml -O https://mvanderh.github.io/pragmatic-lightning/rain-report/Dockerfile
+$ docker-compose -f docker-compose.production.yml up
+```
+
+**Run without Docker**
+
+Alternatively, you can choose to install and run the Bitcoin and Lightning nodes directly on the machine. 
+There are many guides that will help you do this. 
+The best and most up to date is probably the [LND installation guide](https://github.com/lightningnetwork/lnd/blob/master/docs/INSTALL.md).
+
+**Re-initialize Lightning node wallet**
+
+Once you've switched to mainnet, you need to re-initialize your Lightning wallet. 
+Follow the same procedure from the [Start Lightning node](#start-lightning-node) section, but use a secure wallet password this time and
+save the 24-word mnemonic in a safe place. 
+
+**Migrate web app**
+
+From the web app's perspective only one thing has to change for it to work on mainnet: the path to the Macaroon that it uses.
+In the [completed version of the Rain Report app](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
+ I've included an environment variable to make this easy.
+ 
+**Get inbound liquidity**
+
+Lastly, you need to have other Lightning nodes open channels with you so that you can get paid by users. 
+
+At such an early stage of development as we are, this is still pretty difficult. There are free services that will
+open a channel with you, such as [LNBig](https://lnbig.com) or [LightningTo.me](https://lightningto.me/)
+
+There are also services which require a fee, for instance [Thor](https://www.bitrefill.com/thor-lightning-network-channels/?hl=en).
+Presumably these paid hubs are better connected or ask lower routing fees.
+
+This problem is sure to become easier over time as more people join the Network and more hubs spring into existence.
 
 ## Best practices
-- Practice good user hygiene on your Linux box
-- Update LND when a new version comes out to fix security bugs 
-- Write an lnd.conf instead of passing everything by command line
-- Don't put more than $50 USD on node
-- Move off of using Docker 
+
+A few best practices to follow to ensure your money doesn't get stolen or lost:
+
+- Update LND when a new version comes out to fix security bugs (and to get cool new features). 
+- Until Lightning Network becomes more mature, don't put more than $50 USD on Lightning node wallet.
+- Run the app under a separate Unix user from the Lightning and Bitcoin nodes.
+
+**Ending**
+
+This guide was borne out of frustration in setting up Lightning for my own app, [MeterVPN](https://metervpn.com).
+I read through multiple guides and made many mistakes to get it set up, and this guide is a way of protecting others from the same fate.    
+
+Thanks for reading! 
+
