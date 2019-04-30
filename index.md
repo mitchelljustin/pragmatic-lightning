@@ -1,5 +1,6 @@
 ---
-layout: home
+layout: default
+sidebar: toc
 ---
 
 # Introduction
@@ -34,11 +35,6 @@ The whole guide shouldn't take more than 2 hours.
 - Web applications
 - NodeJS and ExpressJS
 - Bitcoin
-
-# Table of Contents
-
-1. The generated Toc will be an ordered list
-{:toc}
 
 # Background
 
@@ -200,7 +196,7 @@ You should also use a different, secure password or your money might get stolen.
 *Please make sure you don't lose either your password or your mnemonic. 
 Unlike traditional payment methods such as Stripe or Paypal, with Bitcoin/Lightning there's no one to bail you out if you lose them.*
 
-## Connect web app to Lightning node
+## Connect web app to Lightning
 
 An app communicates with a Lightning node using an RPC protocol called [`grpc`](https://grpc.io/).   
 The Node package we'll be using for this is called `@radar/lnrpc`.
