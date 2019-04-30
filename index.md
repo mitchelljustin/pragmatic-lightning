@@ -2,11 +2,6 @@
 layout: home
 ---
 
-# Table of Contents
-
-1. The generated Toc will be an ordered list
-{:toc}
-
 # Introduction
 
 {{site.title}} is a guide for building an app that accepts Bitcoin payments on the Lightning Network.
@@ -39,6 +34,11 @@ The whole guide shouldn't take more than 2 hours.
 - Web applications
 - NodeJS and ExpressJS
 - Bitcoin
+
+# Table of Contents
+
+1. The generated Toc will be an ordered list
+{:toc}
 
 # Background
 
@@ -128,7 +128,7 @@ To make this easy I use [Docker](https://www.docker.com/products/docker-desktop)
 1. Paste the underlying code into a file called `docker-compose.yml`
 1. Run `docker-compose up`
 
-[(docker-compose.yml can also be found here)](./docker-compose.yml)
+[(docker-compose.yml can also be found here)](rain-report/docker-compose.yml)
 
 ```yaml
 version: "3.7"

@@ -1,0 +1,55 @@
+version: "3.7"
+
+services:
+  app:
+    build: .
+    depends_on:
+      - lnd
+    ports:
+      - "8000:8000"
+    environment:
+      NETWORK: mainnet
+      LN_RPC_HOST: lnd
+    volumes:
+      - ./lnd_data:/home/app/lnd_data
+
+  lnd:
+    image: btcpayserver/lnd:v0.6-beta
+    depends_on:
+      - bitcoind
+    ports:
+      - "9735:9735"
+      - "10009:10009"
+    volumes:
+      - ./lnd_data:/root/.lnd
+      - ./bitcoind_data:/root/.bitcoin
+    command: >
+      lnd
+        --debuglevel=info
+        --externalip=0.0.0.0
+        --rpclisten=0.0.0.0:10009
+
+        --bitcoin.active
+        --bitcoin.mainnet
+        --bitcoin.node=bitcoind
+
+        --bitcoind.rpchost=bitcoind
+        --bitcoind.rpcuser=satoshi7
+        --bitcoind.rpcpass=satoshi7
+        --bitcoind.zmqpubrawblock=tcp://bitcoind:28332
+        --bitcoind.zmqpubrawtx=tcp://bitcoind:28333
+
+  bitcoind:
+    image: kylemanna/bitcoind
+    volumes:
+      - ./bitcoind_data:/bitcoin/.bitcoin
+    command: >
+      bitcoind
+        -rpcuser=satoshi7
+        -rpcpassword=satoshi7
+        -rpcallowip=0.0.0.0/0
+
+        -zmqpubrawblock=tcp://0.0.0.0:28332
+        -zmqpubrawtx=tcp://0.0.0.0:28333
+
+        -prune=1

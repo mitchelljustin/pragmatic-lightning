@@ -13,7 +13,9 @@ services:
         --debuglevel=info
         --externalip=0.0.0.0
         --rpclisten=0.0.0.0:10009
+
         --bitcoin.active
         --bitcoin.testnet
         --bitcoin.node=neutrino
+
         --neutrino.connect=faucet.lightning.community

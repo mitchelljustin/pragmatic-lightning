@@ -3,3 +3,7 @@ description: >-
   Build a fully funcitonal Bitcoin Lightning app in no time.
 theme: minima
 markdown: kramdown
+exclude:
+  - .idea
+  - rain-report/bitcoind_data
+  - rain-report/lnd_data
