@@ -477,7 +477,8 @@ $ curl -v localhost:8000/weather
 lntb10n1pwvwjjjpp5fnrkz0sa830s8lqza8tdflwqr8s6cegvqkmy60a44qfc79t5fh4qd9c2ajkzargv4ezqun9wphhyapqv96zqnt0dcsyzurjyqerjgpjxqcnjgp3x5arqv36xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effyqhj7gryxsenjdpe89nz6v3nxa3z6dr9xguz6wtxvvej6ep38q6ngvf5x33k2ep5cqzpg6rk3card20ca5j3p0x70waz3xa6y4zjjp8e9m0wd8356850hkcuklmpfvmkluz8y0l2yer74j5ja3ar5grej6mjk6d262etwpv3mcxcppxkr6d
 ```
 
-We see the purchase token as well as the Lightning invoice. Enter the invoice into the user's wallet and pay it, then re-call the API with the same purchase token.
+We see the purchase token as well as the Lightning invoice.
+Enter the invoice into the user's wallet and pay it, then re-call the API with the purchase token in the HTTP header.
 
 ```bash
 $ curl localhost:8000/weather -H X-Purchase-Token:d439499f-237b-4e28-9fc3-d1854144ced4
@@ -512,6 +513,7 @@ pasting the invoice into their app, clicking pay and then `curl`ing again to get
 - Generate new cipher seed mnemonic and store in secure place
 - Use a secure wallet password this time
 - Get some real Bitcoin on an exchange or OTC
+- Use production docker-compose
 
 ## Secure your server
 - Practice good user hygiene on your Linux box

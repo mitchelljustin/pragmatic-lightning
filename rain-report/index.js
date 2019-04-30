@@ -18,27 +18,27 @@ async function start() {
     const invoiceStream = await lnRpc.subscribeInvoices()
     invoiceStream.on("data", (invoice) => {
         if (invoice.state === 1) {
-            const paymentToken = invoice.memo.split("//")[1].trim()
-            hasBeenPaid[paymentToken] = true
+            const purchaseToken = invoice.memo.split("//")[1].trim()
+            hasBeenPaid[purchaseToken] = true
         }
     })
 
     app.get("/weather", async (req, res) => {
-        const paymentToken = req.header("X-Payment-Token")
-        if (paymentToken) {
-            if (hasBeenPaid[paymentToken]) {
+        const purchaseToken = req.header("X-Purchase-Token")
+        if (purchaseToken) {
+            if (hasBeenPaid[purchaseToken]) {
                 res.send("Weather report: 15 degrees Celsius, cloudy and with a chance of Lightning.")
             } else {
                 res.status(400).send("Error: Invoice has not been paid")
             }
         } else {
-            const paymentToken = uuid.v4()
+            const purchaseToken = uuid.v4()
             const invoice = await lnRpc.addInvoice({
                 value: 1, // 1 satoshi == 1/100 millionth of 1 Bitcoin
-                memo: `Weather report at ${new Date().toString()} // ${paymentToken}`,
+                memo: `Weather report at ${new Date().toString()} // ${purchaseToken}`,
             })
             res.status(402)
-                .header("X-Payment-Token", paymentToken)
+                .header("X-Purchase-Token", purchaseToken)
                 .send(invoice.paymentRequest)
         }
     })
