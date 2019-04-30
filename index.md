@@ -69,7 +69,7 @@ This guide follows the best currently known practices, but these are subject to 
 
 In this guide we're going to build a NodeJS + ExpressJS example web app which sells weather reports for Lightning micropayments called Rain Report.
 
-## Create a web app
+## Create web app
 
 Start by creating a vanilla NodeJS/ExpressJS project. For simplicity, this app will be API-only.
 
@@ -114,7 +114,7 @@ Uh oh! You need to pay first.
 
 Of course you can't actually pay yet. Let's fix that.
 
-## Run a Lightning node
+## Run Lightning node
 
 To accept Lightning payments, first we need to run a node on the Lightning Network.
 For this guide we'll be using the [`lnd`](https://github.com/lightningnetwork/lnd) Lightning node implementation, written in Go.
@@ -165,7 +165,7 @@ relevant to its own wallet. This makes it a lot easier and cheaper to run a node
 That means that once you migrate off testnet and start handling real money,
 you'll need to run a "full" Bitcoin node that processes and stores every block in the blockchain.*
 
-## Initialize your Lightning Wallet
+## Initialize Lightning wallet
 
 Before your app can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
 
@@ -275,7 +275,7 @@ Remember, in our case you would have to run `docker-compose exec lnd lncli unloc
 *2. Use the `unlockWallet` method on `lnRpc` in your code.
 If you do this, make sure you don't hardcode the wallet password or it might get leaked when you commit it to Version Control.*
 
-## Generate a payment request
+## Generate payment request
 
 To charge money for the `/weather` API call we need to generate a request for a Bitcoin Lightning payment. In Lightning-land this is called an "invoice".
 
@@ -304,7 +304,7 @@ That long response string is the entire invoice encoded in a [special format](ht
 
 We don't have a user wallet yet, so let's set one up.
 
-## Set up a user wallet
+## Set up user wallet
 
 To set up a user wallet, we will install the [Zap Desktop Wallet](https://github.com/LN-Zap/zap-desktop#install).
 Using a desktop wallet app makes it easier to distinguish between the "server" wallet and the "user" wallet, and it provides a nice
@@ -316,8 +316,6 @@ for the wallet to sync with the blockchain.
 ![Zap Syncing](./images/zap-syncing.png)
 
 While it's syncing, let's get some free testnet Bitcoins. (Don't get your hopes up; testnet Bitcoins are not worth any money :)
-
-## Get testnet Bitcoins
 
 The best way to get testnet Bitcoins is through a "faucet": a service that gives out free coins.
 There's a few of them online, but my favourite is [Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/).
@@ -366,8 +364,6 @@ are trying to come up with solutions. Time will tell whether they succeed.*
 
 *--- SOME MORE STUFF ABOUT LIQUIDITY TO KEEP READER BUSY ---*
 
-## Pay the request
-
 Once your channel is officially opened, you can finally purchase a weather report from your API.
 
 As a reminder, first fire off a request.
@@ -384,12 +380,14 @@ Voilá! Your first weather report has been bought and paid for.
 Actually, you might notice you didn't get a report.
 That's because we haven't written any code to verify the fact that a report was paid for, and if so to send it to the user. 
 
-## Verify purchases on the server
+## Verify purchases on server
 
 To verify the purchase of a report we need to do three things:
 1. Generate a unique token for each new purchase along with an invoice
 2. Read paid invoices as they come in and mark their corresponding purchase tokens as paid
-3. Send report to users who have paid only 
+3. Send report to users who have paid only by checking the token 
+
+We're going to send the purchase token as an HTTP header called `X-Purchase-Token`. 
 
 To make it simple we're using UUIDs as purchase tokens. Add the `uuid` package to your project. 
 ```bash
@@ -481,14 +479,13 @@ $ curl localhost:8000/weather -H X-Purchase-Token:d439499f-237b-4e28-9fc3-d18541
 Weather report: 15 degrees Celsius, cloudy and with a chance of Lightning.
 ```
 
-## Done!
+**Done!**
 
 You've successfully built a Lightning app from scratch and without prior knowledge. Congrats!
 
 [Here's the entire completed project.](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
 
 The next step is to move your app off of Lightning testnet and onto production where you can get paid with real money.
-Jump into the following section if this interests you.
 
 **Sidenote: User Experience**
 
@@ -511,11 +508,9 @@ pasting the invoice into their app, clicking pay and then `curl`ing again to get
 - Get some real Bitcoin on an exchange or OTC
 - Use production docker-compose
 
-## Secure your server
+## Best practices
 - Practice good user hygiene on your Linux box
 - Update LND when a new version comes out to fix security bugs 
-
-## Follow best practices
 - Write an lnd.conf instead of passing everything by command line
 - Don't put more than $50 USD on node
 - Move off of using Docker 

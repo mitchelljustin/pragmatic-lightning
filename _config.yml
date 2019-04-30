@@ -3,6 +3,7 @@ description: >-
   Build a fully functional Bitcoin Lightning app in no time.
 theme: jekyll-theme-leap-day
 markdown: kramdown
+google_analytics: UA-139351657-1
 plugins:
   - jekyll-seo-tag
 exclude:
