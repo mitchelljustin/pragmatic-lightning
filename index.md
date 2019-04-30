@@ -488,7 +488,7 @@ Weather report: 15 degrees Celsius, cloudy and with a chance of Lightning.
 
 You've successfully built a Lightning app from scratch and without prior knowledge. Congrats!
 
-[Here's the complete `index.js` (only 47 lines :).](https://github.com/mvanderh/pragmatic-lightning/blob/master/index.js)
+[Here's the entire completed project.](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
 
 The next step is to move your app off of Lightning testnet and onto production where you can get paid with real money.
 Jump into the following section if this interests you.
