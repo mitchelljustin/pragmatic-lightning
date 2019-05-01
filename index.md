@@ -13,7 +13,7 @@ Unlike other guides, {{site.title}} focuses on getting a fully functional Lightn
 The whole guide shouldn't take more than 2 hours.
 
 **Things you can build include..**
-- [A VPN that charges by the hour](https://metervpn.com)
+- [A VPN that charges by the hour](https://metervpn.com?utm_source=pragmatic-lightning)
 - [A Bitcoin tipping bot for Twitter](https://tippin.me/)
 - [A cloud service provider that doesn't require identification](https://sporestack.com/)  
 - A service that sells AI training data by the Megabyte
@@ -620,7 +620,7 @@ A few best practices to minimize the risk of your money getting stolen or lost:
 
 # Epilogue
 
-Pragmatic Lightning was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com).
+Pragmatic Lightning was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com?utm_source=pragmatic-lightning).
 In the process, I read through many guides and made numerous mistakes.
 
 It exists to prevent others from dealing with the same problems and frustrations
