@@ -13,9 +13,9 @@ Unlike other guides, {{site.title}} focuses on getting a fully functional Lightn
 The whole guide shouldn't take more than 2 hours.
 
 **Things you can build include..**
-- A VPN that charges by the hour
-- A Bitcoin tipping bot for Twitter
-- A cloud service provider that doesn't require identification  
+- [A VPN that charges by the hour](https://metervpn.com)
+- [A Bitcoin tipping bot for Twitter](https://tippin.me/)
+- [A cloud service provider that doesn't require identification](https://sporestack.com/)  
 - A service that sells AI training data by the Megabyte
 - An adult content website with builtin micropayments
 
