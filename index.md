@@ -360,6 +360,7 @@ In Zap,
 This will create a channel with your Lightning server node.
  
 It'll take a while for the transaction to be confirmed and the channel to be opened.
+When it does, you'll see the new channel state changed from "pending open" to "open".
 
 **Sidenote: Inbound Liquidity**
 
@@ -394,20 +395,22 @@ Now, click "Pay" in Zap and paste the invoice. Once you click "Send", payment sh
 Voilá! Your first weather report has been bought and paid for. 
 
 Actually, you might notice you didn't get a report back from the API call.
-That's because we haven't written any code to verify the fact that a report was paid for, and if so to send it to the user. 
+That's because you haven't written any code to verify the fact that a report was paid for, and if so to send it to the user. 
 
 ## Verify purchases on server
 
 Last step! 
 
 To verify the purchase of a report we need to do three things:
+
 1. Generate a unique token for each new purchase along with the invoice.
 2. Read paid invoices as they come in and mark their corresponding purchase tokens.
 3. Send report to users who have paid only by checking the token.
 
-We're going to send the purchase token as an HTTP header called `X-Purchase-Token`. 
+We're going to send the purchase token as an HTTP header called `X-Purchase-Token`. Once again,
+there are no set standards yet so we make up our own. 
 
-To make it simple we're using UUIDs as purchase tokens. Add the `uuid` package to your project. 
+To make it simple we're using UUIDs for purchase tokens. Add the `uuid` package to your project. 
 ```bash
 $ yarn add uuid
 ```
@@ -417,8 +420,8 @@ Require it at the top of "index.js"
 const uuid = require("uuid")
 ```
 
-On a `/weather` API call, generate a new UUID to use as purchase token. Include it in the invoice memo so that we can
-mark it as paid later when we're reading invoices.
+On a `/weather` API call, generate a new UUID to use as purchase token. Include it in the invoice memo so we can
+mark it as paid when we're reading invoices later.
 
 ```javascript
 app.get("/weather", async (req, res) => {
@@ -497,53 +500,63 @@ $ curl localhost:8000/weather -H X-Purchase-Token:d439499f-237b-4e28-9fc3-d18541
 Weather report: 15 degrees Celsius, cloudy and with a chance of Lightning.
 ```
 
-**Done!**
-
-You've successfully built a Lightning app from scratch and without prior knowledge. Congrats!
-
-[Here's the entire completed project.](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
-
-The next step is to move your app off of Lightning testnet and onto production where you can get paid with real money.
+Boom! We've successfully purchased a weather report with Lightning micropayments.
 
 **Sidenote: User Experience**
 
 *Obviously, this is not how you'd want a user to interact with your app: `curl`ing a URL, 
-pasting the invoice into their app, clicking pay and then `curl`ing again to get the report. Quite the pain for something so banal.*
+pasting the invoice into their app, clicking pay and then `curl`ing again to get the report.*
 
-*To make your app more user-friendly, I'd recommend either adding a Web UI to your app and using 
+*To make your app more user-friendly, either add a Web client to your app and use 
 [Lightning Payment URIs](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md#encoding-overview) or 
-[WebLN](https://github.com/joule-labs/webln) to push invoices,
- or writing a client-side app that handles Lightning payments for the user automatically.* 
+[WebLN](https://github.com/joule-labs/webln) to show invoices to the user,
+ or write a complete client-side app that handles Lightning payments for the user automatically.* 
+
+**Done!**
+
+You built a Lightning app from scratch and without prior knowledge of Lightning. Congrats!
+
+[For reference, here's the entire completed project.](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
+
+The next step is to move your app off of Lightning testnet and onto production, where you can get paid with real money.
 
 # Migrating to Production
 
-Let's make some real money.
+This whole endeavour becomes much more interesting if the app can get paid with real-world money instead of test money.
+In the current state of Lightning and Bitcoin development, it still takes a decent amount of effort to get there. 
+
+The next section breaks it down for you and makes it as easy as possible.  
 
 ## Switch to mainnet
 
-For an app to accept real Bitcoins, the Lightning node it talks to needs to run on mainnet. 
+First off, as with any web application you need to find a server machine to run it on. 
+Nowadays most apps run on cloud providers like Digital Ocean or AWS, which also works fine
+for Lightning apps.
+
+Next, for an app to accept real Bitcoins the Lightning node it connects to needs to be running on mainnet. 
 
 In the future this will be as easy as adding the `--bitcoin.mainnet` config flag to your "docker-compose.yml".
 
-Unfortunately as of now (Apr 30, 2019) the Neutrino Bitcoin node used in this guide is still experimental, 
-and thus LND won't allow you to use it on mainnet where money could be lost.
-Therefore you need to run a full Bitcoin node which downloads and verifies the whole 200GB+ blockchain.
+Unfortunately as of now (May 1, 2019) the Neutrino Bitcoin node used in this guide is still experimental, 
+and LND won't allow you to use it on mainnet, where money could be lost.
 
+**Full Bitcoin node** 
+
+You need to run a full Bitcoin node which downloads and verifies the whole 200GB+ blockchain.
 There are two ways to do this:
  
-1. Write a "docker-compose.yml" for production which includes a full Bitcoin node.
-1. Install and run the node daemons manually on your local machine, not via Docker.
+1. Write a "docker-compose.yml" for production, which includes a container with a full Bitcoin node.
+1. Install and run the Lightning and Bitcoin nodes on your local machine (not with Docker).
 
-For both options you need at least 500GB of disk space so that you can store the full Bitcoin blockchain now and well into the future.
-Make sure of this when you set up your app on a cloud service like Digital Ocean or AWS. 
+For either option you need at least 500GB of disk space, to store the full Bitcoin blockchain now and well into the future.
+Make sure of this when you set up your app on a cloud provider. 
 
 **Docker-compose.yml for production**
 
 I've written a ["production" docker-compose.yml file](./rain-report/docker-compose.production.yml) 
-that includes Docker containers for both the mainnet Bitcoin node and the mainnet Lightning node,
-and connects them to each other. 
+that has containers for a mainnet Bitcoin node and a mainnet Lightning node, and connects them up. 
 
-I also included a container and Dockerfile for the web app that sets convenient environment variables for the app to connect to Lightning.
+I also included an "app" container and Dockerfile that sets convenient environment variables for the app to connect to Lightning.
 You can find all this code in [the Rain Report project folder](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report).
 
 To use the production docker-compose.yml, run
@@ -557,7 +570,7 @@ $ docker-compose -f docker-compose.production.yml up
 
 Alternatively, you can choose to install and run the Bitcoin and Lightning nodes directly on the machine. 
 There are many guides that will help you do this. 
-The best and most up to date is probably the [LND installation guide](https://github.com/lightningnetwork/lnd/blob/master/docs/INSTALL.md).
+The best and most up to date is probably the [LND installation guide by Lightning Labs](https://github.com/lightningnetwork/lnd/blob/master/docs/INSTALL.md).
 
 **Re-initialize Lightning node wallet**
 
@@ -565,36 +578,55 @@ Once you've switched to mainnet, you need to re-initialize your Lightning wallet
 Follow the same procedure from the [Start Lightning node](#start-lightning-node) section, but use a secure wallet password this time and
 save the 24-word mnemonic in a safe place. 
 
-**Migrate web app**
+**Migrate app to production**
 
-From the web app's perspective only one thing has to change for it to work on mainnet: the path to the Macaroon that it uses.
-In the [completed version of the Rain Report app](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
- I've included an environment variable to make this easy.
+From the app's perspective, only one thing has to change for it to work on mainnet: the path to the Macaroon that it uses
+for RPC calls.
+ 
+However, there are additional changes you need to make if you run the app in a Docker container: 
+
+1. Point the app at the Lightning node running in another container
+2. Link the Lightning node's volume in the app container so it can read its credentials
+
+I've included all of these changes plus convenient environment
+ variables in the [completed version of the Rain Report app](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report).
  
 **Get inbound liquidity**
 
 Lastly, you need to have other Lightning nodes open channels with you so that you can get paid by users. 
+Like mentioned in a sidenote earlier, this is still pretty difficult.
 
-At such an early stage of development as we are, this is still pretty difficult. There are free services that will
-open a channel with you, such as [LNBig](https://lnbig.com) or [LightningTo.me](https://lightningto.me/)
+There are free services that will open a channel with you, such as 
+[LNBig](https://lnbig.com) or [LightningTo.me](https://lightningto.me/).
 
 There are also services which require a fee, for instance [Thor](https://www.bitrefill.com/thor-lightning-network-channels/?hl=en).
 Presumably these paid hubs are better connected or ask lower routing fees.
+
+In the future, liquidity techologies like 
+[Lightning Loop](https://blog.lightning.engineering/posts/2019/03/20/loop.html) and
+[Atomic Multipath Payments](https://bitcoinist.com/atomic-multi-path-help-bitcoin-become-formidable-payment-instrument/)
+will be helpful in routing payments to your node. 
 
 This problem is sure to become easier over time as more people join the Network and more hubs spring into existence.
 
 ## Best practices
 
-A few best practices to follow to ensure your money doesn't get stolen or lost:
+A few best practices to minimize the risk of your money getting stolen or lost:
 
 - Update LND when a new version comes out to fix security bugs (and to get cool new features). 
-- Until Lightning Network becomes more mature, don't put more than $50 USD on Lightning node wallet.
-- Run the app under a separate Unix user from the Lightning and Bitcoin nodes.
+- Don't put more than $50 USD on Lightning node wallet, until Lightning Network becomes more mature.
+- Run the web app under a separate Unix user from the Lightning and Bitcoin nodes.
 
 **Ending**
 
-This guide was borne out of frustration in setting up Lightning for my own app, [MeterVPN](https://metervpn.com).
-I read through multiple guides and made many mistakes to get it set up, and this guide is a way of protecting others from the same fate.    
+This guide was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com).
+In the process, I read through many guides and made numerous mistakes.
 
-Thanks for reading! 
+This guide exists to prevent others from dealing with the same problems and frustrations.    
+
+Thanks for reading!
+
+**Sources**
+
+--TODO--
 
