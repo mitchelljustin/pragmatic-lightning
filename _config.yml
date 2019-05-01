@@ -1,9 +1,15 @@
 title: Pragmatic Lightning
 description: >-
-  Build a fully functional Bitcoin Lightning app in no time.
+  The easiest guide for building a Bitcoin Lightning app.
 theme: jekyll-theme-leap-day
 markdown: kramdown
 google_analytics: UA-139351657-1
+twitter:
+  username: scalefree_
+social:
+  name: Mitchell V
+  links:
+    - https://twitter.com/scalefree_
 plugins:
   - jekyll-seo-tag
 exclude:

@@ -1,6 +1,7 @@
 ---
 layout: default
 sidebar: toc
+title: Building a Bitcoin Lightning app
 ---
 
 # Introduction
