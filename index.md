@@ -619,10 +619,10 @@ A few best practices to minimize the risk of your money getting stolen or lost:
 
 # Epilogue
 
-This effort was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com).
+Pragmatic Lightning was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com).
 In the process, I read through many guides and made numerous mistakes.
 
-This guide exists to prevent others from dealing with the same problems and frustrations
+It exists to prevent others from dealing with the same problems and frustrations
 in setting up Lightning, and instead to get them building Lapps.
 
 Thanks for reading!
