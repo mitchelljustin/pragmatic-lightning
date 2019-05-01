@@ -63,7 +63,7 @@ A network of these channels plus special Bitcoin scripts called [HTLCs](https://
 enables payments to be routed through peers that don't have to trust each other. [Read more about the underlying technology](https://lightning.engineering/technology.html).
 
 Lightning Network is still at an early stage. 
-Its interface is still in flux, and there aren't accepted standards on how to do interact with it yet from an app's perspective.
+Its interface is still in flux, and there aren't accepted standards on how to interact with it yet from an app's perspective.
 This guide follows the best currently known practices, but these are subject to change in the future.   
 
 # Building the App
