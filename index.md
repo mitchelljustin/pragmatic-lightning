@@ -527,7 +527,7 @@ In the current state of Lightning and Bitcoin development, it still takes a dece
 
 The next section breaks it down for you and makes it as easy as possible.  
 
-## Switch to mainnet
+**Switch to mainnet**
 
 First off, as with any web application you need to find a server machine to run it on. 
 Nowadays most apps run on cloud providers like Digital Ocean or AWS, which also works fine
@@ -609,7 +609,7 @@ will be helpful in routing payments to your node.
 
 This problem is sure to become easier over time as more people join the Network and more hubs spring into existence.
 
-## Best practices
+**Best practices**
 
 A few best practices to minimize the risk of your money getting stolen or lost:
 
@@ -617,16 +617,23 @@ A few best practices to minimize the risk of your money getting stolen or lost:
 - Don't put more than $50 USD on Lightning node wallet, until Lightning Network becomes more mature.
 - Run the web app under a separate Unix user from the Lightning and Bitcoin nodes.
 
-**Ending**
+# Epilogue
 
-This guide was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com).
+This effort was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com).
 In the process, I read through many guides and made numerous mistakes.
 
-This guide exists to prevent others from dealing with the same problems and frustrations.    
+This guide exists to prevent others from dealing with the same problems and frustrations
+in setting up Lightning, and instead to get them building Lapps.
 
 Thanks for reading!
 
 **Sources**
 
---TODO--
+- [LND installation guide on Github](https://github.com/lightningnetwork/lnd/blob/master/docs/INSTALL.md)
+- [Lightning.community tutorials](https://dev.lightning.community/tutorial/index.html)
+- [Zap iOS node remote setup guide](https://ln-zap.github.io/zap-tutorials/iOS-remote-node-setup.html)
+- [The LND Github Issues page](https://github.com/lightningnetwork/lnd/issues)
 
+**Social Links**
+
+<a href="https://twitter.com/scalefree_?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-size="large" data-show-screen-name="false" data-show-count="false">Follow @scalefree_</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
