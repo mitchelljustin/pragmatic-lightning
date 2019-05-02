@@ -1,7 +1,7 @@
 ---
 layout: default
 sidebar: toc
-title: Building a Bitcoin Lightning app
+title: Build a Bitcoin Lightning app
 ---
 
 # Introduction
@@ -64,7 +64,10 @@ Lightning Network is still at an early stage.
 There aren't yet set standards on how to interact with it from an app's perspective.
 This guide follows the best currently known practices, but these are subject to change in the future.   
 
-# Building the App
+---
+
+
+# Build a Lightning App
 
 In this guide we're going to build a NodeJS + ExpressJS example web app which sells weather reports for Lightning micropayments,
  called Rain Report.
@@ -76,10 +79,10 @@ In this guide we're going to build a NodeJS + ExpressJS example web app which se
 Start by creating a vanilla NodeJS/ExpressJS project. For simplicity, this app will be API-only.
 
 ```bash
-$ mkdir rain-report
-$ cd rain-report
-$ yarn init
-$ yarn add express
+mkdir rain-report
+cd rain-report
+yarn init
+yarn add express
 ```
 
 Add a file "index.js" which will contain our entire web app.
@@ -121,39 +124,25 @@ Of course you can't actually pay yet. Let's fix that.
 To accept Lightning payments, first we need to run a node on the Lightning Network.
 For this guide we'll be using the [LND](https://github.com/lightningnetwork/lnd) Lightning node implementation, written in Go.
 
-**Note:** Don't worry about losing money: the Lightning node will run on the test network (**testnet**), which doesn't use real Bitcoins.
-To accept real Bitcoins, the Lightning node has to run on the main network (**mainnet**). 
- 
-To make this easy we use [Docker](https://www.docker.com/products/docker-desktop). 
+**Note: Don't worry about losing money, this Lightning node runs on the test network (testnet) which doesn't use real Bitcoins.
+To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
+  
+To make this easy we use [Docker](https://www.docker.com/products/docker-desktop), direct download links for Docker: 
+[\[Mac\]](https://download.docker.com/mac/stable/Docker.dmg)
+[\[Windows\]](https://download.docker.com/win/stable/Docker%20for%20Windows%20Installer.exe)
 
-1. Paste the underlying code into a file called "docker-compose.yml". [(Direct link)](rain-report/docker-compose.yml)
-1. Run `docker-compose up`
+```bash
+curl -O https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/rain-report/docker-compose.yml
+docker-compose up
+``` 
 
-```yaml
-version: "3.7"
+This command downloads and runs a Lightning node inside a [Docker container](https://www.docker.com/resources/what-container),
+ which makes it convenient to start, stop and modify it. 
 
-services:
-  lnd:
-    image: btcpayserver/lnd:v0.6-beta
-    ports:
-      - "9735:9735"
-      - "10009:10009"
-    volumes:
-      - ./lnd_data:/root/.lnd
-    command: >
-      lnd
-        --debuglevel=info
-        --externalip=0.0.0.0
-        --rpclisten=0.0.0.0:10009
-        --bitcoin.active
-        --bitcoin.testnet
-        --bitcoin.node=neutrino
-        --neutrino.connect=faucet.lightning.community
-```
+That's it! You are now running a node on the Lightning test network. 
+It's syncing with both the Bitcoin blockchain and the Lightning network graph.     
 
-That's it! You are now running a node on the Lightning test network, which exposes the port 10009 for Remote Procedure Calls (RPC).
-
-It will take some time (1-10 mins) for the node to sync to the Bitcoin blockchain. But you can continue with the next step in the meanwhile.  
+But you can continue with the next step in the meanwhile.  
 
 **Sidenote: The Big Bitcoin Blockchain**
 
@@ -174,7 +163,7 @@ This will hopefully change in the near future.*
 
 Before your app can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
 
-To do this, we'll run the `lncli create` command inside the Docker container and generate a new random private key.
+To do this, we'll run a command inside the Docker container to generate a new random private key.
 
 Since the node is on testnet, security isn't that important: you can pick a simple 8-character wallet password like "satoshi7".
 
@@ -190,6 +179,7 @@ Input your passphrase if you wish to encrypt it (or press enter to proceed witho
 
 Generating fresh cipher seed...
 ```
+
 The command will print out your "cipher seed mnemonic": 24 English words that map one-to-one to your generated private key.
 You can ignore this for now and move on to the next section. 
 
@@ -320,6 +310,8 @@ graphical interface.
 
 Follow the setup in the Zap desktop wallet. It will be very similar to the one you did earlier with `lncli`. Again, you'll have to wait a little while (1-10 mins)
 for the wallet to sync with the blockchain.
+
+**Note**: If your Zap desktop wallet gets stuck on the start screen and doesn't start syncing, just quit it and restart it.
 
 ![Zap Syncing](./images/zap-syncing.png)
 
@@ -516,6 +508,7 @@ pasting the invoice into their app, clicking pay and then `curl`ing again to get
 **Done!**
 
 You built a Lightning app from scratch and without prior knowledge of Lightning. Congrats!
+You can share it with friends who have Lightning wallets on testnet and they'll be able to use it as well.
 
 [For reference, here's the entire completed project.](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
 
