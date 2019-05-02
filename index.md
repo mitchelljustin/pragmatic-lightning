@@ -395,12 +395,12 @@ To open the channel between user and node, in Zap
 1. Click on the name of your wallet in the top right
 1. Select "Manage Channels", and click "Create New"
 1. Paste the node URI into the search field
-1. Enter 0.002 tBTC (or 200,000 tsatoshis) for the amount
+1. Enter an amount of Bitcoins to put up on your side of the channel e.g. 0.002 tBTC 
 1. Select "Fast" (because we're impatient like that :)
 1. Click "Next" then "Open Channel" 
 
-It'll take a while (10-20 minutes) for the transaction to be confirmed and the channel to be opened.
-If successful, you'll see the new channel state on the "Manage Channels" page change from "pending open" to "open".
+It takes a while (10-20 minutes) for the opening transaction to be confirmed and the channel to be operational.
+Once successful, you'll see the new channel state on the "Manage Channels" page change from "pending open" to "open".
 
 **Sidenote: Inbound Liquidity**
 
