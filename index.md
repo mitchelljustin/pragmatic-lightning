@@ -69,14 +69,14 @@ This guide follows the best currently known practices, but these are subject to 
 
 # Build a Lightning App
 
-In this guide we're going to build a NodeJS + ExpressJS example web app which sells weather reports for Lightning micropayments,
+In this guide we're going to build a NodeJS + ExpressJS web API which sells weather reports for Lightning micropayments,
  called Rain Report.
 
 **Note**: Returning real weather reports is out of scope for this guide. The app will return hardcoded reports.
 
 ## Create web app
 
-Start by creating a vanilla NodeJS/ExpressJS project. For simplicity, this app will be API-only.
+Start by creating a vanilla NodeJS/ExpressJS project. This guide uses async/await, which is supported in NodeJS v8 and later.
 
 ```bash
 mkdir rain-report
@@ -84,6 +84,9 @@ cd rain-report
 yarn init
 yarn add express
 ```
+
+**Note**: *You may substitute `npm` for `yarn` wherever it's used in this guide.
+Just make sure instead of `yarn add` you run `npm install --save`.*
 
 Add a file "index.js" which will contain our entire web app.
 
@@ -122,26 +125,36 @@ Of course you can't actually pay yet. Let's fix that.
 ## Start Lightning node
 
 To accept Lightning payments, first we need to run a node on the Lightning Network.
-For this guide we'll be using the [LND](https://github.com/lightningnetwork/lnd) Lightning node implementation, written in Go.
+For this guide we'll be using the [LND (Lightning Network Daemon)](https://github.com/lightningnetwork/lnd) implementation, written in Go.
 
-**Note: Don't worry about losing money, this Lightning node runs on the test network (testnet) which doesn't use real Bitcoins.
+**Note: Don't worry about losing money, this Lightning node will run on the test network (testnet) which doesn't use real Bitcoins.
 To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
   
-To make this easy we use [Docker](https://www.docker.com/products/docker-desktop), direct download links for Docker: 
+To make this easy we use [Docker](https://www.docker.com/products/docker-desktop). Direct download links for Docker: 
 [\[Mac\]](https://download.docker.com/mac/stable/Docker.dmg)
 [\[Windows\]](https://download.docker.com/win/stable/Docker%20for%20Windows%20Installer.exe)
+
+Once Docker is installed, run
 
 ```bash
 curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/start-lnd.sh | sh
 ``` 
 
-This command downloads and runs a Lightning node inside a [Docker container](https://www.docker.com/resources/what-container),
+That's it! 
+
+The script downloads and runs an LND instance in the background inside a [Docker container](https://www.docker.com/resources/what-container),
  which makes it convenient to start, stop and modify it. 
+ 
+It also preloads blockchain data so that you don't have to wait 10 - 15 minutes for the node to download and verify it on its own.
 
-That's it! You are now running a node on the Lightning test network. 
-It's syncing with both the Bitcoin blockchain and the Lightning network graph.     
+Some commands to control the LND container:
 
-But you can continue with the next step in the meanwhile.  
+```bash
+docker-compose up -d                  # Start LND instance in the backgound
+docker-compose logs -f                # Read LND logs
+docker-compose exec lnd <command...>  # Execute command inside running container
+docker-compose down                   # Stop LND instance 
+```    
 
 **Sidenote: The Big Bitcoin Blockchain**
 
@@ -162,7 +175,7 @@ This will hopefully change in the near future.*
 
 Before your app can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
 
-To do this, we'll run a command inside the Docker container to generate a new random private key.
+To do this, we'll run the "lncli create" command inside the container and generate a new random private key.
 
 Since the node is on testnet, security isn't that important: you can pick a simple 8-character wallet password like "satoshi7".
 
@@ -192,8 +205,9 @@ Unlike traditional payment methods such as Stripe or Paypal, with Bitcoin+Lightn
 
 ## Connect web app to Lightning
 
-An app communicates with a Lightning node using an RPC protocol called [`grpc`](https://grpc.io/).   
-The Node package we'll be using for this is called `@radar/lnrpc`.
+An app communicates with a Lightning node using an RPC (Remote Procedure Call) protocol called [GRPC](https://grpc.io/). 
+The app will be using a Node package called "@radar/lnrpc".
+
 ```bash
 $ yarn add @radar/lnrpc
 ```
@@ -217,25 +231,19 @@ async function start() {
 The app needs three pieces of information to connect to the node:
 
 1. Address and port, to locate the node.
-2. TLS certificate, which authenticates the node.
+2. TLS certificate, to authenticate the node.
 3. Macaroon, an authentication string which enables the app to perform privileged actions like requesting money.  
 
-The first one is easy: the node is running locally and exposes the RPC interface on port 10009.
+The address and port are easy: the node is running on localhost and exposes the RPC interface on port 10009.
+
+LND generates the last two pieces as files: "tls.cert" and "admin.macaroon". They're in the "lnd_data/" directory, 
+so altogether we write:  
 
 ```javascript
 const lnRpc = await connectToLnNode({
-    server: "localhost:10009",
-    // TODO
-})
-```
-
-LND generates the last two pieces as files: "tls.cert" and "admin.macaroon". They're in the "lnd_data/" directory, so we write:  
-
-```javascript
-const lnRpc = await connectToLnNode({
-    server:         "localhost:10009",
-    tls:            "./lnd_data/tls.cert",
-    macaroonPath:   "./lnd_data/data/chain/bitcoin/testnet/admin.macaroon",
+    server:         "localhost:10009", // 10009 is the GRPC port 
+    tls:            "./lnd_data/tls.cert", // Generated by LND
+    macaroonPath:   "./lnd_data/data/chain/bitcoin/testnet/admin.macaroon", // Generated by LND, specific to testnet
 })
 ```
 
@@ -266,7 +274,7 @@ In that case, wait for a couple of minutes before trying again.
 *This is because when a Lightning node restarts with a wallet already initialized, it blocks calls to most RPC methods until it's unlocked with the wallet password.
 There are two ways to unlock it, which one you should use depends on your needs.*
 
-*1. Manually execute an `lncli unlock` command after the node starts up and enter the wallet password.
+*1. Manually execute an "lncli unlock" command after the node starts up and enter the wallet password.
 Remember, in our case you would have to run `docker-compose exec lnd lncli unlock`.*
 
 *2. Use the [`unlockWallet`](https://api.lightning.community/#unlockwallet) method on `lnRpc` in your code.
@@ -286,7 +294,7 @@ app.get("/weather", async (req, res) => {
       memo: `Weather report at ${new Date().toString()}` // User will see this as description for the payment
     })
      // Respond with HTTP 402 Payment Required
-    res.status(402).send(invoice.paymentRequest)
+    res.status(402).send(`${invoice.paymentRequest}\n`)
 })
 ```
 
