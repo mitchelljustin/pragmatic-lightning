@@ -402,6 +402,9 @@ To open the channel between user and node, in Zap
 It takes a while (10-20 minutes) for the opening transaction to be confirmed and the channel to be operational.
 Once successful, you'll see the new channel state on the "Manage Channels" page change from "pending open" to "open".
 
+**Note**: If your channel shows up as "offline", try restarting both LND and Zap and wait a while for them to discover each
+other. 
+
 **Sidenote: Inbound Liquidity**
 
 *In Lightning nomenclature, the amount of Bitcoin on the other side of your channels is called "inbound liquidity".
