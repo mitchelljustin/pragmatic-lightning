@@ -132,8 +132,7 @@ To make this easy we use [Docker](https://www.docker.com/products/docker-desktop
 [\[Windows\]](https://download.docker.com/win/stable/Docker%20for%20Windows%20Installer.exe)
 
 ```bash
-curl -O https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/rain-report/docker-compose.yml
-docker-compose up
+curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/start-lnd.sh | sh
 ``` 
 
 This command downloads and runs a Lightning node inside a [Docker container](https://www.docker.com/resources/what-container),

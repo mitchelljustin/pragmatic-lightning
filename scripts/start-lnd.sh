@@ -1,6 +1,8 @@
 #!/bin/sh
 
-curl -O https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/preloaded_data.tar
-tar xf preloaded_data.tar
-curl -O https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/rain-report/docker-compose.yml
+set -x
+
+curl -O https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/preloaded_data.tar \
+    -O https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/rain-report/docker-compose.yml
+tar xvf preloaded_data.tar
 docker-compose up -d
