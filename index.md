@@ -130,33 +130,22 @@ For this guide we'll be using the [LND (Lightning Network Daemon)](https://githu
 
 **Note: Don't worry about losing money, this Lightning node will run on the test network (testnet) which doesn't use real Bitcoins.
 To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
-  
-To make this easy we use [Docker](https://www.docker.com/products/docker-desktop). Direct download links for Docker: 
-[\[Mac\]](https://download.docker.com/mac/stable/Docker.dmg)
-[\[Windows\]](https://download.docker.com/win/stable/Docker%20for%20Windows%20Installer.exe)
 
-Once Docker is installed, run
-
+To install LND and its commandline tool companion LNCLI, run
 ```sh
 curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/install-lnd.sh | sh
 ``` 
 
-That's it! 
-
-The script downloads and runs an LND instance inside a [Docker container](https://www.docker.com/resources/what-container),
- which makes it convenient to start, check and stop. 
+This downloads the binaries for LND and LNCLI into a folder "./lnd".
  
 It also preloads blockchain data so that you don't have to wait 10 - 15 minutes for the node to download and verify it.
 
-Some commands to control the LND container:
-
+Now, start LND with the following command
 ```sh
-docker-compose up                     # Start LND instance in the foreground
-docker-compose up -d                  # Start LND instance in the backgound
-docker-compose logs -f                # Read LND logs
-docker-compose exec lnd <command...>  # Execute command inside running container
-docker-compose down                   # Stop LND instance
-```    
+./lnd/lnd
+```
+
+That's it! It should take <10 seconds to sync the blockchain. 
 
 **Sidenote: The Big Bitcoin Blockchain**
 
@@ -177,12 +166,13 @@ This will hopefully change in the near future.*
 
 Before your app can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
 
-To do this, we'll run the "lncli create" command inside the container and generate a new random private key.
+To do this, we'll run the "lncli create" command and generate a new random private key.
 
 Since the node is on testnet, security isn't that important: you can pick a simple 8-character wallet password like "satoshi7".
 
+In a new terminal window/tab,
 ```sh
-$ docker-compose exec lnd lncli create
+$ ./lnd/lncli create
 Input wallet password: satoshi7
 Confirm wallet password: satoshi7
 
@@ -197,7 +187,7 @@ Generating fresh cipher seed...
 The command will print out your "cipher seed mnemonic": 24 English words that map one-to-one to your generated private key.
 You can ignore this for now and move on to the next section.
 
-**Note**: You can now find out whether LND is done syncing by running `docker-compose exec lnd lncli -n testnet getinfo` 
+**Note**: You can now find out whether LND is done syncing by running `./lnd/lncli -n testnet getinfo` 
 and checking whether "synced_to_chain" is set to true in the output.   
 
 **Sidenote: Production Security**
