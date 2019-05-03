@@ -4,7 +4,7 @@ set -x
 
 # This script installs lnd.
 #
-# Quick install: `curl https://getmic.ro | bash`
+# Quick install: `curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/install-lnd.sh | bash`
 #
 # This script will install lnd to the directory you're in. To install
 # somewhere else (e.g. /usr/local/bin), cd there and make sure you can write to
@@ -18,29 +18,18 @@ set -e
 set -u
 set -o pipefail
 
+cat <<-EOF
+
+=======================================================
+DOWNLOADING LND, LNCLI AND PRELOADED TESTNET BLOCKCHAIN
+=======================================================
+
+EOF
+
 function githubLatestTag {
     finalUrl=$(curl "https://github.com/$1/releases/latest" -s -L -I -o /dev/null -w '%{url_effective}')
     echo "${finalUrl##*v}"
 }
-
-UNKNOWN_OS_MSG= <<-'EOM'
-/=====================================\
-|      COULD NOT DETECT PLATFORM      |
-\=====================================/
-
-To continue with installation, please choose from one of the following values:
-
-- freebsd32
-- freebsd64
-- linux-arm
-- linux32
-- linux64
-- netbsd32
-- netbsd64
-- openbsd32
-- openbsd64
-- osx
-EOM
 
 
 platform=''
@@ -118,7 +107,24 @@ mv "$dirname" lnd/
 rm lnd.tar.gz
 rm -rf "$dirname"
 
-cat <<-'EOM'
+echo "Downloading preloaded blockchain data"
+curl -O https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar
+tar xvf lnd_data.tar
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    lnddir=~/Library/Application\ Support/Lnd
+else
+    lnddir="~/.lnd"
+fi
+mkdir -p "$lnddir"
+mv lnd_data/* "$lnddir"
+rm -rf lnd_data/
+rm lnd_data.tar
+
+cat <<-EOF
+
+=====
+DONE!
+=====
 
 LND (Lightning Network Daemon) and LNCLI (Lightning Network Command Line Interface) have been downloaded to ./lnd.
 
@@ -126,19 +132,6 @@ You can run them with:
 ./lnd/lnd
 ./lnd/lncli
 
-EOM
+Testnet blockchain data has been preloaded. Enjoy!
 
-
-echo "Downloading preloaded blockchain data"
-curl -O https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar
-tar xvf lnd_data.tar
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    lnddir="~/Library/Application Support/Lnd"
-else
-    lnddir="~/.lnd"
-fi
-mkdir "$lnddir"
-mv lnd_data/ "$lnddir"
-rm -rf lnd_data/
-rm lnd_data.tar
-
+EOF
