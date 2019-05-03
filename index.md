@@ -138,7 +138,7 @@ To make this easy we use [Docker](https://www.docker.com/products/docker-desktop
 Once Docker is installed, run
 
 ```sh
-curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/start-lnd.sh | sh
+curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/install-lnd.sh | sh
 ``` 
 
 That's it! 
