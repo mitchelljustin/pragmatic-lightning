@@ -133,7 +133,7 @@ To accept real Bitcoins, the Lightning node has to run on the main network (main
 
 To install LND and its commandline tool companion LNCLI, run
 ```sh
-curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/install-lnd.sh | sh
+curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/install.sh | sh
 ``` 
 
 This downloads the binaries for LND and LNCLI into a folder "./lnd".

@@ -1,18 +1,15 @@
 #!/bin/sh
 
-set -x
-
 # This script installs lnd.
 #
-# Quick install: `curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/install-lnd.sh | bash`
+# Quick install: `curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/install.sh | sh`
 #
 # This script will install lnd to the directory you're in. To install
 # somewhere else (e.g. /usr/local/bin), cd there and make sure you can write to
-# that directory, e.g. `cd /usr/local/bin; curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/install-lnd.sh | sudo bash`
+# that directory, e.g. `cd /usr/local/bin; curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/install.sh | sudo sh`
 #
 # Acknowledgments:
 #   - Shamelessly copied from https://getmic.ro/
-
 
 set -e
 set -u
@@ -20,9 +17,11 @@ set -o pipefail
 
 cat <<-EOF
 
-=======================================================
-DOWNLOADING LND, LNCLI AND PRELOADED TESTNET BLOCKCHAIN
-=======================================================
+=========================================================
+    Installing the The Pragmatic Lightning Package..
+
+    SERVER NODE, USER NODE AND PRELOADED BLOCKCHAIN
+=========================================================
 
 EOF
 
@@ -110,15 +109,20 @@ rm -rf "$dirname"
 echo "Downloading preloaded blockchain data"
 curl -O https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar
 tar xvf lnd_data.tar
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    lnddir=~/Library/Application\ Support/Lnd
-else
-    lnddir="~/.lnd"
-fi
-mkdir -p "$lnddir"
-mv lnd_data/* "$lnddir"
+cp -R lnd_data lnd_server
+cp -R lnd_data lnd_client
 rm -rf lnd_data/
 rm lnd_data.tar
+
+echo "#!/bin/sh \n./lnd/lnd --configfile lnd_server/lnd.conf %@" > ./server-lnd.sh
+echo "#!/bin/sh \n./lnd/lncli --lnddir lnd_server %@" > ./server-cli.sh
+echo "#!/bin/sh \n./lnd/lnd --configfile lnd_client/lnd.conf %@" > ./client-lnd.sh
+echo "#!/bin/sh \n./lnd/lncli --lnddir lnd_client %@" > ./client-cli.sh
+
+chmod +x server-lnd.sh
+chmod +x server-cli.sh
+chmod +x client-lnd.sh
+chmod +x client-cli.sh
 
 cat <<-EOF
 
@@ -127,11 +131,18 @@ DONE!
 =====
 
 LND (Lightning Network Daemon) and LNCLI (Lightning Network Command Line Interface) have been downloaded to ./lnd.
+Testnet blockchain data has been preloaded.
 
-You can run them with:
-./lnd/lnd
-./lnd/lncli
+To run the server node,
+./server-lnd.sh
 
-Testnet blockchain data has been preloaded. Enjoy!
+To run commands on the server node,
+./server-cli.sh <command..>
+
+To run the client node,
+./client-lnd.sh
+
+To run commands on the client node,
+./client-cli.sh <command..>
 
 EOF
