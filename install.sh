@@ -18,9 +18,9 @@ set -o pipefail
 cat <<-EOF
 
 =========================================================
-    Installing the The Pragmatic Lightning Package..
+    Installing Pragmatic Lightning care package..
 
-    SERVER NODE, USER NODE AND PRELOADED BLOCKCHAIN
+    SERVER NODE, CLIENT NODE AND PRELOADED BLOCKCHAIN
 =========================================================
 
 EOF
@@ -91,12 +91,12 @@ To continue with installation, please choose from one of the following values:
 EOM
   read -rp "> " platform
 else
-  echo "Detected platform: $platform"
+  echo "-> Detected platform: $platform"
 fi
 
 TAG=$(githubLatestTag lightningnetwork/lnd)
 
-echo "Downloading https://github.com/lightningnetwork/lnd/releases/download/v$TAG/lnd-$platform-v$TAG.tar.gz"
+echo "-> Downloading https://github.com/lightningnetwork/lnd/releases/download/v$TAG/lnd-$platform-v$TAG.tar.gz"
 curl -L "https://github.com/lightningnetwork/lnd/releases/download/v$TAG/lnd-$platform-v$TAG.tar.gz" > lnd.tar.gz
 
 dirname="lnd-$platform-v$TAG"
@@ -106,7 +106,7 @@ mv "$dirname" lnd/
 rm lnd.tar.gz
 rm -rf "$dirname"
 
-echo "Downloading preloaded blockchain data"
+echo "-> Downloading preloaded blockchain data"
 curl -O https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar.gz
 tar xvf lnd_data.tar.gz
 
@@ -119,10 +119,10 @@ mv lnd_client/lnd.client.conf lnd_client/lnd.conf
 rm -rf lnd_data/
 rm lnd_data.tar.gz
 
-echo "#!/bin/sh \n./lnd/lnd --lnddir lnd_server \"%@\"" > ./server-lnd.sh
-echo "#!/bin/sh \n./lnd/lncli --lnddir lnd_server \"%@\"" > ./server-cli.sh
-echo "#!/bin/sh \n./lnd/lnd --lnddir lnd_client \"%@\"" > ./client-lnd.sh
-echo "#!/bin/sh \n./lnd/lncli --lnddir lnd_client \"%@\"" > ./client-cli.sh
+echo "#!/bin/sh\n./lnd/lnd --lnddir lnd_server \$@" > ./server-lnd.sh
+echo "#!/bin/sh\n./lnd/lncli --lnddir lnd_server \$@" > ./server-cli.sh
+echo "#!/bin/sh\n./lnd/lnd --lnddir lnd_client \$@" > ./client-lnd.sh
+echo "#!/bin/sh\n./lnd/lncli --lnddir lnd_client \$@" > ./client-cli.sh
 
 chmod +x server-lnd.sh
 chmod +x server-cli.sh
