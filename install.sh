@@ -107,17 +107,22 @@ rm lnd.tar.gz
 rm -rf "$dirname"
 
 echo "Downloading preloaded blockchain data"
-curl -O https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar
-tar xvf lnd_data.tar
-cp -R lnd_data lnd_server
-cp -R lnd_data lnd_client
-rm -rf lnd_data/
-rm lnd_data.tar
+curl -O https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar.gz
+tar xvf lnd_data.tar.gz
 
-echo "#!/bin/sh \n./lnd/lnd --configfile lnd_server/lnd.conf %@" > ./server-lnd.sh
-echo "#!/bin/sh \n./lnd/lncli --lnddir lnd_server %@" > ./server-cli.sh
-echo "#!/bin/sh \n./lnd/lnd --configfile lnd_client/lnd.conf %@" > ./client-lnd.sh
-echo "#!/bin/sh \n./lnd/lncli --lnddir lnd_client %@" > ./client-cli.sh
+cp -R lnd_data lnd_server
+mv lnd_server/lnd.server.conf lnd_server/lnd.conf
+
+cp -R lnd_data lnd_client
+mv lnd_client/lnd.client.conf lnd_client/lnd.conf
+
+rm -rf lnd_data/
+rm lnd_data.tar.gz
+
+echo "#!/bin/sh \n./lnd/lnd --lnddir lnd_server \"%@\"" > ./server-lnd.sh
+echo "#!/bin/sh \n./lnd/lncli --lnddir lnd_server \"%@\"" > ./server-cli.sh
+echo "#!/bin/sh \n./lnd/lnd --lnddir lnd_client \"%@\"" > ./client-lnd.sh
+echo "#!/bin/sh \n./lnd/lncli --lnddir lnd_client \"%@\"" > ./client-cli.sh
 
 chmod +x server-lnd.sh
 chmod +x server-cli.sh
