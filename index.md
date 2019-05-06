@@ -131,21 +131,21 @@ For this guide we'll be using the [LND (Lightning Network Daemon)](https://githu
 **Note: Don't worry about losing money, this Lightning node will run on the test network (testnet) which doesn't use real Bitcoins.
 To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
 
-To install LND and its commandline tool companion LNCLI, run
+To install LND and its command line tool companion LNCLI, run
 ```sh
 curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/scripts/install.sh | sh
 ``` 
 
-This downloads the binaries for LND and LNCLI into a folder "./lnd".
+This downloads the binaries for LND and LNCLI into a folder "./lnd", and preloads blockchain data so that
+ you don't have to wait 10 - 15 minutes for the node to download and verify it.
  
-It also preloads blockchain data so that you don't have to wait 10 - 15 minutes for the node to download and verify it.
+It also adds convenience scripts to start and interact with LND. More on these later.
 
-Now, start LND with the following command
-```sh
-./lnd/lnd
+Start the server Lightning node by running
+
+```bash
+./lnd-server.sh
 ```
-
-That's it! It should take <10 seconds to sync the blockchain. 
 
 **Sidenote: The Big Bitcoin Blockchain**
 
@@ -166,13 +166,13 @@ This will hopefully change in the near future.*
 
 Before your app can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
 
-To do this, we'll run the "lncli create" command and generate a new random private key.
+To do this, we'll run the LNCLI "create" command and generate a new random private key.
 
 Since the node is on testnet, security isn't that important: you can pick a simple 8-character wallet password like "satoshi7".
 
 In a new terminal window/tab,
 ```sh
-$ ./lnd/lncli create
+$ ./lncli-server.sh create
 Input wallet password: satoshi7
 Confirm wallet password: satoshi7
 
@@ -187,7 +187,7 @@ Generating fresh cipher seed...
 The command will print out your "cipher seed mnemonic": 24 English words that map one-to-one to your generated private key.
 You can ignore this for now and move on to the next section.
 
-**Note**: You can now find out whether LND is done syncing by running `./lnd/lncli -n testnet getinfo` 
+**Note**: You can now find out whether LND is done syncing by running `./lncli-server.sh -n testnet getinfo` 
 and checking whether "synced_to_chain" is set to true in the output.   
 
 **Sidenote: Production Security**
@@ -348,7 +348,7 @@ A Lightning wallet needs two pieces of information to open a channel: the IP add
 Run the "getinfo" command again to find the URI containing both.
 
 ```sh
-docker-compose exec lnd lncli -n testnet getinfo
+./lncli-server.sh -n testnet getinfo
 ```
 
 The output will look like

@@ -20,10 +20,12 @@ cat <<-EOF
 =========================================================
     Installing Pragmatic Lightning care package..
 
-    SERVER NODE, CLIENT NODE AND PRELOADED BLOCKCHAIN
+    LND, LNCLI BINARIES AND PRELOADED BLOCKCHAIN
 =========================================================
 
 EOF
+
+PRELOADED_DATA_URL=https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar.gz
 
 function githubLatestTag {
     finalUrl=$(curl "https://github.com/$1/releases/latest" -s -L -I -o /dev/null -w '%{url_effective}')
@@ -68,6 +70,8 @@ elif [[ "$OSTYPE" == "netbsd"* ]]; then
   fi
 fi
 
+echo "-> Downloading LND and LNCLI binaries"
+
 if test "x$platform" = "x"; then
   cat <<EOM
 /=====================================\\
@@ -106,10 +110,12 @@ mv "$dirname" lnd/
 rm lnd.tar.gz
 rm -rf "$dirname"
 
-echo "-> Downloading preloaded blockchain data"
-curl -O https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar.gz
+echo "-> Downloading testnet blockchain data"
+echo "-> Downloading $PRELOADED_DATA_URL"
+curl -O "$PRELOADED_DATA_URL"
 tar xvf lnd_data.tar.gz
 
+echo "-> Copying data and configs for client and server node"
 cp -R lnd_data lnd_server
 mv lnd_server/lnd.server.conf lnd_server/lnd.conf
 
@@ -119,15 +125,17 @@ mv lnd_client/lnd.client.conf lnd_client/lnd.conf
 rm -rf lnd_data/
 rm lnd_data.tar.gz
 
-echo "#!/bin/sh\n./lnd/lnd --lnddir lnd_server \$@" > ./server-lnd.sh
-echo "#!/bin/sh\n./lnd/lncli --lnddir lnd_server \$@" > ./server-cli.sh
-echo "#!/bin/sh\n./lnd/lnd --lnddir lnd_client \$@" > ./client-lnd.sh
-echo "#!/bin/sh\n./lnd/lncli --lnddir lnd_client \$@" > ./client-cli.sh
+echo "-> Creating convenience scripts"
 
-chmod +x server-lnd.sh
-chmod +x server-cli.sh
-chmod +x client-lnd.sh
-chmod +x client-cli.sh
+echo "#!/bin/sh\n./lnd/lnd --lnddir lnd_server \$@" > ./lnd-server.sh
+echo "#!/bin/sh\n./lnd/lncli --lnddir lnd_server \$@" > ./lncli-server.sh
+echo "#!/bin/sh\n./lnd/lnd --lnddir lnd_client \$@" > ./lnd-client.sh
+echo "#!/bin/sh\n./lnd/lncli --lnddir lnd_client \$@" > ./lncli-client.sh
+
+chmod +x lnd-server.sh
+chmod +x lncli-server.sh
+chmod +x lnd-client.sh
+chmod +x lncli-client.sh
 
 cat <<-EOF
 
@@ -139,15 +147,15 @@ LND (Lightning Network Daemon) and LNCLI (Lightning Network Command Line Interfa
 Testnet blockchain data has been preloaded.
 
 To run the server node,
-./server-lnd.sh
+./lnd-server.sh
 
 To run commands on the server node,
-./server-cli.sh <command..>
+./lncli-server.sh <command..>
 
 To run the client node,
-./client-lnd.sh
+./lnd-client.sh
 
 To run commands on the client node,
-./client-cli.sh <command..>
+./lncli-client.sh <command..>
 
 EOF
