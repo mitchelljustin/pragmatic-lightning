@@ -15,32 +15,32 @@ async function start() {
     const hasBeenPaid = {}
     const invoiceStream = await lnRpc.subscribeInvoices()
     invoiceStream.on("data", (invoice) => {
-        console.log("Reading invoice", invoice)
-        if (invoice.settled) {
-            const purchaseId = invoice.memo.split("||")[1].trim()
-            hasBeenPaid[purchaseId] = true
+        console.log("Invoice", invoice)
+        if (invoice.settled) { // Settled means paid
+            const purchaseId = invoice.memo.split("||")[1].trim() // Parse purchase ID out of invoice memo
+            hasBeenPaid[purchaseId] = true // Mark purchase as paid
         }
     })
 
     app.get("/weather", async (req, res) => {
-        let purchaseId = req.header("X-Purchase-Id")
-        if (purchaseId) {
+        let purchaseId = req.header("X-Purchase-Id") // Read HTTP header
+        if (purchaseId) { // Client has supplied a purchase ID
             console.log("Checking purchase", purchaseId)
-            if (hasBeenPaid[purchaseId]) {
+            if (hasBeenPaid[purchaseId]) { // Check whether purchase has been paid for
                 res.send("Cloudy starting later this afternoon, with a chance of Lightning.\n")
             } else {
                 res.status(400).send("Invoice not paid")
             }
         } else {
-            purchaseId = uuid.v4()
+            purchaseId = uuid.v4() // Generate random new UUID
             console.log("New purchase", purchaseId)
             const invoice = await lnRpc.addInvoice({
-                value: 1,
-                memo: `Weather report || ${purchaseId}`
+                value: 1, // 1 "satoshi" == 1/100 millionth of 1 Bitcoin
+                memo: `Weather report || ${purchaseId}` // Include purchase ID in memo so we can parse it out later
             })
-            res.status(402)
-                .header("X-Purchase-Id", purchaseId)
-                .send(`${invoice.paymentRequest}\n`)
+            res.status(402) // HTTP 402 Payment Required
+                .header("X-Purchase-Id", purchaseId) // Return purchase ID in X-Purchase-Id HTTP header
+                .send(`${invoice.paymentRequest}\n`) // Send Lightning payment request in HTTP body
         }
     })
 

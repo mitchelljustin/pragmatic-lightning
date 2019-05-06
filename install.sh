@@ -17,11 +17,11 @@ set -o pipefail
 
 cat <<-EOF
 
-=========================================================
+==============================================================
     Installing Pragmatic Lightning care package..
 
-    LND, LNCLI BINARIES AND PRELOADED BLOCKCHAIN
-=========================================================
+    LND BINARIES, PRELOADED BLOCKCHAIN AND CONVENIENCE SCRIPTS
+==============================================================
 
 EOF
 
