@@ -127,10 +127,22 @@ rm lnd_data.tar.gz
 
 echo "-> Creating convenience scripts"
 
-echo "#!/bin/sh\n./lnd/lnd --lnddir lnd_server \$@" > ./lnd-server.sh
-echo "#!/bin/sh\n./lnd/lncli --lnddir lnd_server \$@" > ./lncli-server.sh
-echo "#!/bin/sh\n./lnd/lnd --lnddir lnd_client \$@" > ./lnd-client.sh
-echo "#!/bin/sh\n./lnd/lncli --lnddir lnd_client \$@" > ./lncli-client.sh
+cat <<-EOF > ./lnd-server.sh
+#!/bin/sh
+exec ./lnd/lnd --lnddir lnd_server \$@
+EOF
+cat <<-EOF > ./lncli-server.sh
+#!/bin/sh
+exec ./lnd/lncli --lnddir lnd_server -n testnet \$@
+EOF
+cat <<-EOF > ./lnd-client.sh
+#!/bin/sh
+exec ./lnd/lnd --lnddir lnd_client \$@
+EOF
+cat <<-EOF > ./lncli-client.sh
+#!/bin/sh
+exec ./lnd/lncli --lnddir lnd_client --rpcserver=localhost:10010 -n testnet \$@
+EOF
 
 chmod +x lnd-server.sh
 chmod +x lncli-server.sh
