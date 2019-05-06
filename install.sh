@@ -127,27 +127,27 @@ rm lnd_data.tar.gz
 
 echo "-> Creating convenience scripts"
 
-cat <<-EOF > ./lnd-server.sh
+cat <<-EOF > ./server-lnd.sh
 #!/bin/sh
 exec ./lnd/lnd --lnddir lnd_server \$@
 EOF
-cat <<-EOF > ./lncli-server.sh
+cat <<-EOF > ./server-lncli.sh
 #!/bin/sh
 exec ./lnd/lncli --lnddir lnd_server -n testnet \$@
 EOF
-cat <<-EOF > ./lnd-client.sh
+cat <<-EOF > ./client-lnd.sh
 #!/bin/sh
 exec ./lnd/lnd --lnddir lnd_client \$@
 EOF
-cat <<-EOF > ./lncli-client.sh
+cat <<-EOF > ./client-lncli.sh
 #!/bin/sh
 exec ./lnd/lncli --lnddir lnd_client --rpcserver=localhost:10010 -n testnet \$@
 EOF
 
-chmod +x lnd-server.sh
-chmod +x lncli-server.sh
-chmod +x lnd-client.sh
-chmod +x lncli-client.sh
+chmod +x server-lnd.sh
+chmod +x server-lncli.sh
+chmod +x client-lnd.sh
+chmod +x client-lncli.sh
 
 cat <<-EOF
 
@@ -159,15 +159,15 @@ LND (Lightning Network Daemon) and LNCLI (Lightning Network Command Line Interfa
 Testnet blockchain data has been preloaded.
 
 To run the server node,
-./lnd-server.sh
+./server-lnd.sh
 
 To run commands on the server node,
-./lncli-server.sh <command..>
+./server-lncli.sh <command..>
 
 To run the client node,
-./lnd-client.sh
+./client-lnd.sh
 
 To run commands on the client node,
-./lncli-client.sh <command..>
+./client-lncli.sh <command..>
 
 EOF

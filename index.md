@@ -72,12 +72,15 @@ This guide follows the best currently known practices, but these are subject to 
 In this guide we're going to build a NodeJS + ExpressJS web API which sells weather reports for Lightning micropayments,
  called Rain Report.
 
-**Note**: Returning real weather reports is out of scope for this guide. The app will return hardcoded reports.
+**Prerequisites**:
+- Unix-based OS (Mac OSX, Linux, FreeBSD etc). If you're a Windows user, you'll need to [run in a Linux VM](https://itsfoss.com/install-linux-in-virtualbox/).
+- Node v8.0.0+
+
+**Note**: Returning real weather reports is out of scope for this guide. This app will return only hardcoded reports.
 
 ## Create web app
 
 Start by creating a vanilla NodeJS/ExpressJS project.
-This guide uses [async/await](https://javascript.info/async-await), so you need NodeJS v8 or later.
 
 ```sh
 mkdir rain-report
@@ -131,25 +134,25 @@ For this guide we'll be using the [LND (Lightning Network Daemon)](https://githu
 **Note: Don't worry about losing money, this Lightning node will run on the test network (testnet) which doesn't use real Bitcoins.
 To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
 
-To install LND and its command line tool companion LNCLI, run
+To install LND and a set of convenience scripts, run
 ```sh
 curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/install.sh | sh
 ``` 
 
-This downloads the binaries for LND and LNCLI into a folder "./lnd", and preloads blockchain data so that
- you don't have to wait 10 - 15 minutes for the node to download and verify it.
+This script downloads the LND binaries into a local folder, and preloads testnet blockchain data so that
+ you don't have to wait 15 minutes for the node to download and verify it itself.
  
-It also adds convenience scripts to start and interact with LND.
+It also creates two distinct LND "environments", client and server, so that we can easily send payments
+from a user to your web app. There's 2 convenience scripts for each environment: 
+LND (the LND daemon process) and LNCLI (to control the daemon via the command line). 
 
---- EXPLAIN CONVENIENCE SCRIPTS --- 
-
-Now start the server Lightning node by running
+Start the server LND by running
 
 ```bash
-./lnd-server.sh
+./server-lnd.sh
 ```
 
-That's it! You're running a node on the Lightning network that our web app can use to accept Bitcoin payments.
+That's it! We're now running a node on the (testnet) Lightning Network that our web app will connect with to accept Bitcoin payments.
 
 **Sidenote: The Big Blockchain**
 
@@ -168,15 +171,16 @@ This will hopefully change in the near future.*
 
 **Next step: Initializing the Lightning node's wallet**
 
-Before your app can get paid, you need to initialize your Lightning "wallet": the private key used to control money on your Lightning node. 
+Before your web app can connect to the server LND, you need to initialize the Lightning "wallet": 
+the [private key](https://en.bitcoin.it/wiki/Private_key) used to control the money on an LND node.
 
-To do this, we'll run the LNCLI "create" command and generate a new random private key.
+To do this, we'll run a "create" command with the server LNCLI and generate a new random private key.
 
 Since the node is on testnet, security isn't that important: you can pick a simple 8-character wallet password like "satoshi7".
 
 In a new terminal,
 ```sh
-$ ./lncli-server.sh create
+$ ./server-lncli.sh create
 Input wallet password: satoshi7
 Confirm wallet password: satoshi7
 
@@ -191,8 +195,8 @@ Generating fresh cipher seed...
 The command will print out your "cipher seed mnemonic": 24 English words that map one-to-one to your generated private key.
 You can ignore this for now and move on to the next section.
 
-**Note**: You can now find out whether LND is done syncing by running `./lncli-server.sh -n testnet getinfo` 
-and checking whether "synced_to_chain" is set to true in the output.   
+**Note**: You can now find out whether LND is done syncing by running `./server-lncli.sh getinfo` 
+and checking whether "synced_to_chain" is set to true in the output.
 
 **Sidenote: Production Security**
 
@@ -204,23 +208,24 @@ Unlike traditional payment methods such as Stripe or Paypal, with Bitcoin+Lightn
 
 ## Connect web app to Lightning
 
-An app communicates with a Lightning node using an RPC (Remote Procedure Call) protocol called [GRPC](https://grpc.io/). 
+An app communicates with a Lightning node using an [RPC (Remote Procedure Call)](https://en.wikipedia.org/wiki/Remote_procedure_call)
+ protocol called [GRPC](https://grpc.io/). 
 The app will be using a Node package called ["@radar/lnrpc"](https://www.npmjs.com/package/@radar/lnrpc).
 
 ```sh
-$ yarn add @radar/lnrpc
+yarn add @radar/lnrpc
 ```
 
 This package mirrors the [LND gRPC methods](https://api.lightning.community/) in NodeJS,
 which keeps things nice and clean.
 
-At the top of "index.js",
+Require it at the top of "index.js",
 ```javascript
 const express = require("express")
 const connectToLnNode = require("@radar/lnrpc") 
 ```
 
-The app needs three pieces of information to connect to the node:
+LNRPC needs three pieces of information to connect to the node:
 
 1. Address and port, to locate the node.
 2. TLS certificate, to authenticate the node.
@@ -270,15 +275,14 @@ LND Info: { identityPubkey:
 *This is because when a Lightning node restarts with a wallet already initialized, it blocks calls to most RPC methods until it's unlocked with the wallet password.
 There are two ways to unlock it, which one you should use depends on your needs.*
 
-*1. Manually execute an "lncli unlock" command after the node starts up and enter the wallet password.
-Remember, in our case you would have to run `docker-compose exec lnd lncli unlock`.*
+*1. Manually execute an LNCLI "unlock" command after the node starts up and enter the wallet password.*
 
-*2. Use the [`unlockWallet`](https://api.lightning.community/#unlockwallet) method on `lnRpc` in your code.
+*2. Use the [`unlockWallet`](https://api.lightning.community/#unlockwallet) RPC method in your code.
 If you do this, make sure you don't hardcode the wallet password or it might get leaked when you commit it to Version Control.*
 
 ## Generate payment request
 
-To charge money for the `/weather` API call we need to generate a request for a Lightning payment. In Lightning-land this is called an "invoice".
+To charge money for the `/weather` API call we need to generate a request for a Lightning payment. In Lightning-land this is called an *invoice*.
 
 LND's RPC interface exposes a method called [`addInvoice`](https://api.lightning.community/#addinvoice) that does just that.
 Let's change the route handler to use it. 
@@ -301,15 +305,83 @@ $ curl localhost:8000/weather
 lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms```
 ```
 
-That long response string is the entire invoice encoded in a [special format](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md), which the user enters it into their Lightning wallet to pay.
+That long response string is the entire Lightning invoice 
+encoded in a [special format](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md), 
+which the user enters it into their Lightning wallet to pay.
 
-We don't have a "client" wallet yet, so let's set one up.
+To pay it we need to set up the client LND and open a channel with the server LND.
 
-## Set up user wallet
+## Set up client wallet
 
---- TODO ---
+Setting up the client LND is very similar to the server LND with one main difference: the client LND
+needs to open a payment channel with the server LND. 
 
-**Note**: If your channel shows up as "offline", try restarting both server and client LNDs
+Before we get to that, let's first start the client LND.
+
+```bash
+./client-lnd.sh
+```
+
+To initialize the client wallet,
+```sh
+$ ./client-lncli.sh create
+Input wallet password: nakamoto
+Confirm wallet password: nakamoto
+
+Do you have an existing cipher seed mnemonic you want to use? (Enter y/n): n
+
+Your cipher seed can optionally be encrypted.
+Input your passphrase if you wish to encrypt it (or press enter to proceed without a cipher seed passphrase):
+
+Generating fresh cipher seed...
+```
+
+Same as the server wallet, the command will print out a 24-word mnemonic for the client wallet. Once again, ignore this. 
+
+**Get testnet Bitcoins**
+
+To open a channel and pay the server, the client first needs to have testnet Bitcoins.
+
+We're going to get testnet coins by using a "faucet": a service that gives out coins for free. 
+[Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/) is the easiest to use, but feel free to use another if you want.
+
+The faucet will ask for a (Bitcoin) address to send coins to. To get a Bitcoin address from the client, run
+```sh
+./client-lncli.sh newaddress p2wkh
+```
+(["p2wkh"](https://bitcoin.stackexchange.com/questions/64733/what-is-p2pk-p2pkh-p2sh-p2wpkh-eli5)
+ is the type of address you're requesting; don't worry about the details for now.)
+
+If you're using Yet Another Bitcoin Testnet Faucet, enter 0.01 for the amount and hit Send.
+
+If all goes according to plan, the faucet will send you a transaction with coins.
+It'll take a while (5-10 mins) to be confirmed. Feel free to grab a coffee or a snack.
+
+To check whether the transaction is confirmed yet, run
+```sh
+./client-lncli.sh walletbalance
+```
+
+If the "confirmed_balance" amount is greater than zero, that means you have received the coins and can move on to the next section. 
+
+**Open channel with server**
+
+Now's the exciting part: we're going to open a Lightning payment channel from the client to the server. 
+
+First we need to know the server's public key and address. Run
+```sh
+$ ./server-lncli.sh getinfo
+{
+	"version": "0.6.0-beta commit=v0.6-beta",
+	...,
+	"uris": [
+        "0320d15fa61ec53ce40fb8adaa6a6d1c7b9aa8b18e6b2c4249217177441f522353@127.0.0.1:9735"
+    ]
+}
+```
+Copy the string in the "uris" array. 
+
+**Note**: If your channel shows up as "offline", try restarting both server and client daemons
 and wait a while for them to discover each other. 
 
 **Sidenote: Inbound Liquidity**
@@ -331,7 +403,7 @@ on mainnet both you and a user would open channels with a well-connected hub ins
 
 ## Pay the invoice
 
-Once your channel is officially open, you can finally purchase a weather report from your API.
+Once your channel is officially opened, you can purchase a weather report from your API.
 
 First fire off a request for a weather report. 
 
@@ -342,7 +414,7 @@ lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzar
   
 Pay the invoice on the client
 ```sh
-$ ./lncli-client.sh payinvoice lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms
+$ ./client-lncli.sh payinvoice lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms
 Description: Weather report || 88700285-4a4e-4c51-b0e6-7ac4709f5aba
 Amount (in satoshis): 1
 Destination: 0320d15fa61ec53ce40fb8adaa6a6d1c7b9aa8b18e6b2c4249217177441f522353
@@ -394,8 +466,8 @@ app.get("/weather", async (req, res) => {
         memo: `Weather report || ${purchaseId}`,
     })
     res.status(402) // HTTP 402 Payment Required
-        .header("X-Purchase-Id", purchaseId)
-        .send(`${invoice.paymentRequest}\n`)
+        .header("X-Purchase-Id", purchaseId) // Return purchase ID in X-Purchase-Id HTTP header
+        .send(`${invoice.paymentRequest}\n`) // Send Lightning payment request in HTTP body
 })
 ```
 
@@ -403,13 +475,13 @@ We need to mark purchase IDs as completed by reading invoices on the fly.
 The RPC method for this is [`subscribeInvoices`](https://api.lightning.community/#subscribeinvoices).
 
 ```javascript
-const paymentCompleted = {}
+const paymentCompleted = {} // Use a real DB in production
 const invoiceStream = await lnRpc.subscribeInvoices()
 invoiceStream.on("data", (invoice) => {
     console.log("Invoice:", invoice)
     if (invoice.settled) { // "Settled" means paid
         const purchaseId = invoice.memo.split("||")[1].trim() // Parse purchase ID out of invoice memo
-        paymentCompleted[purchaseId] = true // Mark purchase as paid so server sends report to client
+        paymentCompleted[purchaseId] = true // Mark purchase as paid 
     }
 })
 
@@ -421,9 +493,9 @@ Finally, tie it all together by checking for a `X-Purchase-Id` request header an
 ```javascript
 app.get("/weather", async (req, res) => {
     const purchaseId = req.header("X-Purchase-Id")
-    if (purchaseId) {
+    if (purchaseId) { // Client has supplied a purchase ID
         console.log("Checking purchase", purchaseId)
-        if (paymentCompleted[purchaseId]) {
+        if (paymentCompleted[purchaseId]) { // Check whether purchase has been paid for
             res.send("15 degrees Celsius, cloudy and with a chance of lightning.")
         } else {
             res.status(400).send("Error: Invoice has not been paid")
@@ -436,8 +508,8 @@ app.get("/weather", async (req, res) => {
             memo: `Weather report || ${purchaseId}`,
         })
         res.status(402) // HTTP 402 Payment Required
-            .header("X-Purchase-Id", purchaseId) // Client uses this to get the report once paid for
-            .send(`${invoice.paymentRequest}\n`) 
+            .header("X-Purchase-Id", purchaseId) // Return purchase ID in X-Purchase-Id HTTP header
+            .send(`${invoice.paymentRequest}\n`) // Send Lightning payment request in HTTP body
     }
 })
 ```
@@ -463,7 +535,7 @@ lntb10n1pwvwjjjpp5fnrkz0sa830s8lqza8tdflwqr8s6cegvqkmy60a44qfc79t5fh4qd9c2ajkzar
 Pay the invoice on the client
 
 ```sh
-$ ./lncli-client.sh payinvoice lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms
+$ ./client-lncli.sh payinvoice lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms
 Description: Weather report || 88700285-4a4e-4c51-b0e6-7ac4709f5aba
 Amount (in satoshis): 1
 Destination: 0320d15fa61ec53ce40fb8adaa6a6d1c7b9aa8b18e6b2c4249217177441f522353
