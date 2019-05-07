@@ -1,15 +1,18 @@
 title: Pragmatic Lightning
 description: >-
   Build a Bitcoin Lightning app from scratch.
-theme: jekyll-theme-leap-day
+remote_theme: allejo/jekyll-docs-theme
 markdown: kramdown
-google_analytics: UA-139351657-1
-twitter:
-  username: scalefree_
+analytics:
+  google: UA-139351657-1
+project: {}
 social:
-  name: Mitchell V
-  links:
-    - https://twitter.com/scalefree_
+  github:
+    user: mvanderh
+    repo: pragmatic-lightning
+  twitter:
+    enabled: true
+    account: scalefree_
 plugins:
   - jekyll-seo-tag
 exclude:

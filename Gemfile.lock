@@ -114,6 +114,8 @@ GEM
       rouge (~> 2)
     jekyll-default-layout (0.1.4)
       jekyll (~> 3.0)
+    jekyll-docs-theme (0.1.1)
+      jekyll (~> 3.3)
     jekyll-feed (0.11.0)
       jekyll (~> 3.3)
     jekyll-gist (1.5.0)
@@ -243,9 +245,9 @@ PLATFORMS
 
 DEPENDENCIES
   github-pages
+  jekyll-docs-theme
   jekyll-feed (~> 0.6)
   jekyll-seo-tag
-  jekyll-theme-leap-day
   minima (~> 2.0)
   tzinfo-data
 

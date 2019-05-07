@@ -1,7 +1,6 @@
 ---
-layout: default
-sidebar: toc
-title: Build a Bitcoin Lightning app
+layout: page
+title: Pragmatic Lightning
 ---
 
 # Introduction
