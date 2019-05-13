@@ -709,12 +709,12 @@ A few best practices to minimize the risk of your money getting stolen or lost:
 Pragmatic Lightning was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com?utm_source=pragmatic-lightning&utm_medium=blog).
 In the process, I read through many guides and made numerous mistakes.
 
-Hopefully it prevents others from dealing with the same problems and frustrations
-in setting up Lightning, and instead to get them straight to building Lapps.
+Hopefully this guide prevents others from dealing with the same problems and frustrations
+in setting up Lightning, and instead to get them building Lapps as fast as possible.
 
 Thanks for reading! If you have any comments or criticism, please let me know at --- INSERT CONTACT INFO --- 
 
-**Sources**
+**Sources and inspirations**
 
 - [LND installation guide on Github](https://github.com/lightningnetwork/lnd/blob/master/docs/INSTALL.md)
 - [Lightning.community tutorials](https://dev.lightning.community/tutorial/index.html)
