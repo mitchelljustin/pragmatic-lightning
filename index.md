@@ -1,10 +1,10 @@
 ---
-title: Pragmatic Lightning | Build a Bitcoin Lightning app in under 1 hour.
+title: Pragmatic Lightning | Build a Bitcoin Lightning app in 1 hour.
 ---
 
 # Introduction
 
-{{site.title}} is a guide for building an app that accepts Bitcoin micropayments using [Lightning Network](http://lightning.network/).
+{{site.title}} is a step-by-step guide for building an app that accepts Bitcoin micropayments using [Lightning Network](http://lightning.network/).
 
 Unlike other guides, {{site.title}} focuses on building a fully functional app running on Lightning testnet with the lowest amount of time and effort.
 
@@ -90,7 +90,7 @@ yarn add express
 **Note**: *You may substitute `npm` for `yarn` wherever it's used in this guide.
 Just make sure instead of `yarn add` you run `npm install --save`.*
 
-Add a file "index.js" which will contain our entire web app.
+We will sell weather reports at a single "/weather" API endpoint. Add a file "index.js" which will contain our entire web app. 
 
 ```javascript
 const express = require("express")
@@ -132,7 +132,7 @@ For this guide we'll be using the [LND (Lightning Network Daemon)](https://githu
 **Note: Don't worry about losing money, this Lightning node will run on the test network (testnet) which doesn't use real Bitcoins.
 To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
 
-This guide provides a care package to install LND and a set of convenience scripts. Run 
+This guide provides a script that makes running a Lightning node super easy. Run 
 ```sh
 curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/install.sh | bash
 ```
@@ -140,11 +140,10 @@ curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/insta
 This downloads the LND binaries into a local folder, and preloads testnet blockchain data so that
  you don't have to wait 15 minutes for LND to download and verify it.
  
-It also creates 2 distinct LND "environments", client and server, so that we can easily simulate payments
-between the user and your web app. Each environment has 2 convenience scripts: 
-LND (node daemon) and LNCLI (CLI to control the node daemon). 
+It also creates convenience scripts for 2 distinct LND "environments", client and server, so that we can easily simulate payments
+between the user and your web app. 
 
-Start the server LND instance by running
+Start the server LND node daemon by running
 
 ```bash
 ./server-lnd.sh
@@ -167,7 +166,7 @@ Therefore, the creators of LND have restricted its use to testnet only.*
 you'll need to run a ["full" Bitcoin node](https://bitcoin.org/en/full-node) that processes and stores every block in the blockchain.
 This will hopefully change in the near future.*
 
-**Next step: Initializing the Lightning node's wallet**
+## Initialize server wallet
 
 Before your web app can connect to the server LND, you need to initialize the Lightning "wallet": 
 the [private key](https://en.bitcoin.it/wiki/Private_key) used to control the money on an LND node.
@@ -193,8 +192,8 @@ Generating fresh cipher seed...
 The command will print out your "cipher seed mnemonic": 24 English words that map one-to-one to your generated private key.
 You can ignore this for now and move on to the next section.
 
-**Note**: You can now find out whether LND is done syncing by running `./server-lncli.sh getinfo` 
-and checking whether "synced_to_chain" is set to true in the output.
+**Note**: Find out whether LND is done syncing by running `./server-lncli.sh getinfo` 
+and checking whether "synced_to_chain" is set to true.
 
 **Sidenote: Production Security**
 
@@ -206,18 +205,16 @@ Unlike traditional payment methods such as Stripe or Paypal, with Bitcoin+Lightn
 
 ## Connect web app to Lightning
 
-An app communicates with a Lightning node using an [RPC (Remote Procedure Call)](https://en.wikipedia.org/wiki/Remote_procedure_call)
+An app communicates with an LND node using an [RPC (Remote Procedure Call)](https://en.wikipedia.org/wiki/Remote_procedure_call)
  protocol called [GRPC](https://grpc.io/). 
-The app will be using a Node package called ["@radar/lnrpc"](https://www.npmjs.com/package/@radar/lnrpc).
-
---- DRAW PARALLEL BETWEEN RPC METHODS AND LNCLI COMMANDS --- 
-
+ 
+The LND RPC methods map one-to-one to LNCLI commands, meaning any LNCLI command we execute can also be done as an RPC call and vice versa.
+[You can find the documentation for all the RPC methods here.](https://api.lightning.community/)
+ 
+We'll be using a Node package called [LNRPC](https://www.npmjs.com/package/@radar/lnrpc). 
 ```sh
 yarn add @radar/lnrpc
 ```
-
-This package mirrors the [LND gRPC methods](https://api.lightning.community/) in NodeJS,
-which keeps things nice and clean.
 
 Require it at the top of "index.js",
 ```javascript
@@ -244,7 +241,7 @@ async function start() {
     const lnRpc = await connectToLnNode({ 
         server:         "localhost:10009", // 10009 is the GRPC port 
         tls:            "./lnd_server/tls.cert", // Generated by LND
-        macaroonPath:   "./lnd_server/data/chain/bitcoin/testnet/admin.macaroon", // Generated by LND, specific to testnet
+        macaroonPath:   "./lnd_server/data/chain/bitcoin/testnet/admin.macaroon", // Generated by LND
     })
     
     //...
@@ -260,7 +257,7 @@ const lnRpc = await connectToLnNode({
 console.log("LND info:", await lnRpc.getInfo()) 
 ``` 
 
-You should get output that looks like this.
+When you restart the server, you should get output that looks like this.
 ```
 LND Info: { identityPubkey:
    '020bf2ea1558744cdbf3145d7693c912fa326ecac921627491590878bb7a45d4fc',
@@ -337,23 +334,21 @@ Generating fresh cipher seed...
 
 Same as the server wallet, the command will print out a 24-word mnemonic for the client wallet. Once again, ignore this. 
 
-**Get testnet Bitcoins**
-
---- MAKE OBVIOUS THAT FAUCET IS AN OUTSIDE SERVICE ---
+## Get testnet Bitcoins
 
 To open a channel and pay the server, the client first needs to have testnet Bitcoins.
 
-We're going to get testnet coins by using a "faucet": a service that gives out coins for free. 
-[Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/) is the easiest to use, but feel free to use another if you want.
+We're going to get testnet coins by using a website that gives out free coins called a "faucet",
+ specifically [Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/).
 
-The faucet will ask for a (Bitcoin) address to send coins to. To generate a Bitcoin address on the client, run
+The faucet will ask for a (Bitcoin) address to send coins to. To generate a Bitcoin address on the client wallet, run
 ```sh
 ./client-lncli.sh newaddress p2wkh
 ```
 *(["p2wkh"](https://bitcoin.stackexchange.com/questions/64733/what-is-p2pk-p2pkh-p2sh-p2wpkh-eli5)
  is the type of address you're generating; don't worry about the details for now.)*
 
-If you're using Yet Another Bitcoin Testnet Faucet, enter 0.01 for the amount and hit Send.
+Enter 0.01 for the amount and hit Send.
 
 It'll take a while (5-10 mins) for the coins to be confirmed. Feel free to grab a coffee or a snack.
 
@@ -364,7 +359,7 @@ To check whether the transaction is confirmed yet, run
 
 If the "confirmed_balance" amount is greater than zero, that means you have received the coins and can move on to the next section. 
 
-**Open channel with server**
+## Open channel with server
 
 Now's the exciting part: we're going to open a Lightning payment channel from the client to the server. 
 
@@ -379,17 +374,20 @@ $ ./server-lncli.sh getinfo
 ```
 The string in "identity_pubkey" is the server node's public key.
 
-First connect the client node to the server node
+First connect the client node to the server node. Note we use a different port 9735 for peer-to-peer connections, compared to port 10009 for RPC calls.
 ```sh
-$ ./client-lncli.sh connect <server_pubkey>@localhost:9735
+$ ./client-lncli.sh connect <server_public_key>@localhost:9735
 {
 
 }
 ```
 
-Then, open a channel with 100,000 satoshis in it.
+Then, open a channel with 100,000 [satoshis](https://en.bitcoin.it/wiki/Satoshi_(unit)) in it.
 ```sh
-./client-lncli.sh openchannel <server_pubkey> 100000
+$ ./client-lncli.sh openchannel <server_public_key> 100000
+{
+	"funding_txid": "1c1894ffcb71d56c3fdead5af38a3d335d7e078ad7b6bbc0577d45e674f1886c"
+}
 ```
 
 Like the faucet transaction, the channel transaction will take a while (5-10 mins).
@@ -427,7 +425,7 @@ are constantly iterating on solutions to this problem, among them
 on mainnet both you and a user would open channels with a well-connected hub instead of a direct channel.
 That way you can send and receive payments from and to many different nodes.*
 
-## Pay the invoice
+## Pay invoice
 
 Once your channel is open, you can pay an invoice from your API.
 
@@ -437,8 +435,6 @@ First fire off a request for a weather report.
 $ curl localhost:8000/weather
 lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms
 ```
-    
---- TODO: MIGHT HAVE TO WAIT A WHILE OR PAYMENT ROUTE WONT BE FOUND ---
 
 Pay the invoice from the client
 ```sh
@@ -454,6 +450,9 @@ Confirm payment (yes/no): yes
 }
 ```
 
+**Note**: *If you get an error like "unable to find a path to destination", just wait a little while (1-2 mins). 
+The client and server nodes need some time to discover each other.*
+
 Voilá! Your first weather report has been bought and paid for. 
 
 Actually, you might notice you didn't get a report back from the API call.
@@ -461,16 +460,16 @@ That's because you haven't written code to verify that a report was paid for, an
 
 ## Verify purchases on server
 
-Final step! This is the "meat" of the guide so to speak.
+Final step! 
 
-To verify the purchase of a report we need to do three things:
+To verify a purchase on the server we need to do three things:
 
-1. Generate a unique ID for each new purchase along with the invoice.
+1. Generate a unique ID for each new purchase.
 2. Read settled invoices as they come in and mark their corresponding purchase IDs as completed.
-3. Send report to users who have paid only by checking the purchase ID.
+3. Send report to users who have paid by checking the purchase ID.
 
-We're going to send the purchase ID as an HTTP header called `X-Purchase-Id`. Once again,
-there are no set standards yet so we make up our own. 
+We're going to send the purchase ID as an HTTP header called `X-Purchase-Id`. (Once again,
+there are no set standards yet so we make up our own.)
 
 To keep it simple we're using [UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier) for purchase IDs.
 Add the ["uuid"](https://www.npmjs.com/package/uuid) package to your project. 
@@ -488,6 +487,7 @@ mark it as paid when we're reading invoices later.
 
 ```javascript
 app.get("/weather", async (req, res) => {
+    // New purchase
     const purchaseId = uuid.v4() // Generate random new UUID
     const invoice = await lnRpc.addInvoice({
         value: 1, // 1 satoshi == 1/100 millionth of 1 Bitcoin
@@ -522,6 +522,7 @@ Finally, tie it all together by checking for a `X-Purchase-Id` request header an
 app.get("/weather", async (req, res) => {
     const purchaseId = req.header("X-Purchase-Id") // Read HTTP header
     if (purchaseId) { // Client has supplied a purchase ID
+        // Existing purchase
         console.log("Checking purchase", purchaseId)
         if (purchaseCompleted[purchaseId]) { // Check whether purchase has been paid for
             res.send("15 degrees Celsius, cloudy and with a chance of lightning.")
@@ -529,6 +530,7 @@ app.get("/weather", async (req, res) => {
             res.status(400).send("Error: Invoice has not been paid")
         }
     } else {
+        // New purchase
         const purchaseId = uuid.v4() // Generate random new UUID
         console.log("New purchase", purchaseId)
         const invoice = await lnRpc.addInvoice({
@@ -542,7 +544,7 @@ app.get("/weather", async (req, res) => {
 })
 ```
 
-Let's test it. Note we use the `curl -v` option to obtain the "X-Purchase-Id" header.
+Let's test it. Restart the server and use the `curl -v` option to obtain the "X-Purchase-Id" header.
 ```sh
 $ curl -v localhost:8000/weather
 ...
@@ -560,7 +562,7 @@ $ curl -v localhost:8000/weather
 lntb10n1pwvwjjjpp5fnrkz0sa830s8lqza8tdflwqr8s6cegvqkmy60a44qfc79t5fh4qd9c2ajkzargv4ezqun9wphhyapqv96zqnt0dcsyzurjyqerjgpjxqcnjgp3x5arqv36xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effyqhj7gryxsenjdpe89nz6v3nxa3z6dr9xguz6wtxvvej6ep38q6ngvf5x33k2ep5cqzpg6rk3card20ca5j3p0x70waz3xa6y4zjjp8e9m0wd8356850hkcuklmpfvmkluz8y0l2yer74j5ja3ar5grej6mjk6d262etwpv3mcxcppxkr6d
 ```
 
-Pay the invoice on the client
+Pay the invoice on the client with the LNCLI "payinvoice" command.
 
 ```sh
 $ ./client-lncli.sh payinvoice lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms
@@ -575,7 +577,7 @@ Confirm payment (yes/no): yes
 }
 ```
 
-Then call the API again with the same purchase ID.
+Then call the API again with the same purchase ID you got in the first request.
  
 ```sh
 $ curl localhost:8000/weather -H X-Purchase-Id:d439499f-237b-4e28-9fc3-d1854144ced4
@@ -590,7 +592,9 @@ You've built a functional Lightning app from scratch. Nice!
 
 [For reference, here's the entire completed project.](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
 
-The next step is to move your app off of Lightning testnet and onto mainnet, where you can get paid with real money.
+Now is the time to come up with your own idea for a new Lightning app, and build it using Rain Report as a starter kit. 
+
+Once you're ready to get paid with real money, the next step is to move your app off of Lightning testnet and onto mainnet. 
 
 **Sidenote: User Experience**
 
@@ -605,53 +609,48 @@ pasting the invoice into an app, clicking pay and then `curl`ing again to get th
 # Migrate to Mainnet
 
 This whole endeavour becomes much more interesting if the app can get paid with real-world money instead of test coins.
-In the current state of Lightning and Bitcoin development, it still takes a decent amount of effort to get there. 
+In the current state of Lightning and Bitcoin development, this still requires a decent amount of effort.
 
 The next section breaks it down for you and makes it as easy as possible.  
 
-**Run web app in production**
+**Note: This section is still a work in progress. I will update it as I find better and easier ways to migrate a Lighting app to mainnet.**
 
-As with any web application you need to find a server machine to run it on. 
+## Run web app in production
+
+As with any web application you need a server machine to run it on. 
 
 Nowadays most web apps run on cloud providers like Digital Ocean or AWS, which also works
 for Lightning apps. 
 
 Since you're dealing with real money, take extra care in securing access to the server.
 
-**Switch to mainnet**
+## Switch LND to mainnet
 
 Next, for an app to accept real Bitcoins its Lightning node needs to run on mainnet. 
 
 In the future this will be as easy as adding a `--bitcoin.mainnet` config flag to LND and continuing to use Neutrino.
 
-Unfortunately as of now (May 2, 2019) the Neutrino Bitcoin node used in this guide is still experimental, 
+Unfortunately as of now (May 13, 2019) the Neutrino Bitcoin node used in this guide is still experimental, 
 and LND won't allow you to use it on mainnet where money could be lost.
 
-**Full Bitcoin node** 
+## Run a Full Bitcoin node 
 
 You need to run a full Bitcoin node which downloads and verifies the whole 200GB+ blockchain.
 There are two ways to do this:
  
 1. Write a "docker-compose.yml" for production, which includes a container with a full Bitcoin node.
-1. Install and run the Lightning and Bitcoin nodes on your local machine (not with Docker).
+1. Install and run the Lightning and Bitcoin nodes on the machine locally (not with Docker).
 
 For either option you need at least 500GB of disk space, to store the full Bitcoin blockchain now and well into the future.
 Make sure of this when you set up your app on a cloud provider or elsewhere. 
 
 **Docker-compose.yml for production**
 
-I've written a ["production" docker-compose.yml file](prod/docker-compose.yml) 
+I've written a ["production" docker-compose.yml file](rain-report-prod/docker-compose.yml) 
 that has containers for a mainnet Bitcoin node and a mainnet LND node, and connects them. 
 
 I also included an "app" container and Dockerfile that sets convenient environment variables for the app to connect to LND.
-You can find all this code in [the Rain Report project folder](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report).
-
-To use the production docker-compose.yml, run
- 
-```sh
-$ curl -O https://mvanderh.github.io/pragmatic-lightning/rain-report/docker-compose.production.yml -O https://mvanderh.github.io/pragmatic-lightning/rain-report/Dockerfile
-$ docker-compose -f docker-compose.production.yml up
-```
+You can find all this code in [the production version of the Rain Report app](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report-prod).
 
 **Run without Docker**
 
@@ -661,11 +660,11 @@ The best and most up to date is probably the [LND installation guide by Lightnin
 
 **Initialize mainnet wallet**
 
-Once you've switched to mainnet, you need to initialize your Lightning wallet. 
+Once you've switched LND to mainnet, you need to initialize your Lightning wallet. 
 Follow the same procedure from the [Start Lightning node](#start-lightning-node) section but use a secure wallet password, and
 save the 24-word mnemonic in a safe place. 
 
-**Migrate app to production**
+## Migrate web app to mainnet
 
 From the app's perspective, only one thing has to change for it to work on mainnet: the path to the Macaroon that it uses
 for RPC calls.
@@ -675,8 +674,8 @@ However, there are additional changes you need to make if you run the app in a D
 1. Point the app at the Lightning node running in another container
 2. Link the Lightning node's volume in the app container so it can read the TLS certificate and Macaroon
 
-I've included all of these changes plus convenient environment
-variables in the [completed version of the Rain Report app](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report).
+I've included all of these changes plus convenient environment variables in the 
+[production version of the Rain Report app](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report-prod).
  
 **Get inbound liquidity**
 
@@ -694,9 +693,9 @@ In the future, liquidity techologies like
 [Atomic Multipath Payments](https://bitcoinist.com/atomic-multi-path-help-bitcoin-become-formidable-payment-instrument/)
 will be helpful in routing payments to your node. 
 
-This problem is sure to become easier over time as more people join the Network and more hubs spring into existence.
+Getting inbound liquidity is sure to become easier over time as more people join the Network and more hubs spring into existence.
 
-**Best practices**
+## Best practices
 
 A few best practices to minimize the risk of your money getting stolen or lost:
 
@@ -712,7 +711,10 @@ In the process, I read through many guides and made numerous mistakes.
 Hopefully this guide prevents others from dealing with the same problems and frustrations
 in setting up Lightning, and instead to get them building Lapps as fast as possible.
 
-Thanks for reading! If you have any comments or criticism, please let me know at --- INSERT CONTACT INFO --- 
+Thanks for reading!
+
+If you have any criticisms or suggestions, please let me know by 
+[opening a Github issue](https://github.com/mvanderh/pragmatic-lightning/issues). 
 
 **Sources and inspirations**
 

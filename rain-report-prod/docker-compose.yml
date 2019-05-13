@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     environment:
       NETWORK: mainnet
-      LN_RPC_HOST: lnd
+      LND_HOST: lnd
     volumes:
       - ./lnd_data:/home/app/lnd_data
 
