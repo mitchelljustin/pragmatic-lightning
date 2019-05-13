@@ -12,13 +12,13 @@ async function start() {
     })
     console.log("LND info:", await lnRpc.getInfo())
 
-    const hasBeenPaid = {}
+    const purchaseCompleted = {}
     const invoiceStream = await lnRpc.subscribeInvoices()
     invoiceStream.on("data", (invoice) => {
         console.log("Invoice", invoice)
         if (invoice.settled) { // Settled means paid
             const purchaseId = invoice.memo.split("||")[1].trim() // Parse purchase ID out of invoice memo
-            hasBeenPaid[purchaseId] = true // Mark purchase as paid
+            purchaseCompleted[purchaseId] = true // Mark purchase as completed
         }
     })
 
@@ -26,7 +26,7 @@ async function start() {
         let purchaseId = req.header("X-Purchase-Id") // Read HTTP header
         if (purchaseId) { // Client has supplied a purchase ID
             console.log("Checking purchase", purchaseId)
-            if (hasBeenPaid[purchaseId]) { // Check whether purchase has been paid for
+            if (purchaseCompleted[purchaseId]) { // Check whether purchase has been paid for
                 res.send("Cloudy starting later this afternoon, with a chance of Lightning.\n")
             } else {
                 res.status(400).send("Invoice not paid")

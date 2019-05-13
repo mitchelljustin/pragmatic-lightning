@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   app:
-    build: .
+    build: ../rain-report
     depends_on:
       - lnd
     ports:

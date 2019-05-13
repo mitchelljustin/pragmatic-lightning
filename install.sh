@@ -19,6 +19,7 @@ cat <<-EOF
 
 ==============================================================
     Installing Pragmatic Lightning care package..
+    https://mvanderh.github.io/pragmatic-lightning
 
     LND BINARIES, PRELOADED BLOCKCHAIN AND CONVENIENCE SCRIPTS
 ==============================================================

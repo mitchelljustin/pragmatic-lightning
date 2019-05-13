@@ -7,7 +7,7 @@ title: Pragmatic Lightning
 
 {{site.title}} is a guide for building an app that accepts Bitcoin micropayments using [Lightning Network](http://lightning.network/).
 
-Unlike other guides, {{site.title}} focuses on building a fully functional Lightning app with the lowest amount of time and effort.
+Unlike other guides, {{site.title}} focuses on building a fully functional app running on Lightning testnet with the lowest amount of time and effort.
 
 You can get up and running in 10 minutes, and finish the full guide in less than 1 hour.
 
@@ -70,12 +70,12 @@ This guide follows the best currently known practices, but these are subject to 
 
 In this guide we're going to build a NodeJS + ExpressJS web API which sells weather reports for Lightning micropayments,
  called Rain Report.
+ 
+**Note**: Returning real weather reports is out of scope for this guide. This app will return only hardcoded reports.
 
 **Prerequisites**:
 - Unix-based OS (Mac OSX, Linux, FreeBSD etc). If you're a Windows user, you'll need to [run in a Linux VM](https://itsfoss.com/install-linux-in-virtualbox/).
 - Node v8.0.0+
-
-**Note**: Returning real weather reports is out of scope for this guide. This app will return only hardcoded reports.
 
 ## Create web app
 
@@ -133,19 +133,19 @@ For this guide we'll be using the [LND (Lightning Network Daemon)](https://githu
 **Note: Don't worry about losing money, this Lightning node will run on the test network (testnet) which doesn't use real Bitcoins.
 To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
 
-To install LND and a set of convenience scripts, run
+This guide provides a care package to install LND and a set of convenience scripts. Run 
 ```sh
-curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/install.sh | sh
-``` 
+curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/install.sh | bash
+```
 
-This script downloads the LND binaries into a local folder, and preloads testnet blockchain data so that
- you don't have to wait 15 minutes for the node to download and verify it itself.
+This downloads the LND binaries into a local folder, and preloads testnet blockchain data so that
+ you don't have to wait 15 minutes for LND to download and verify it.
  
-It also creates 2 distinct LND "environments", client and server, so that we can easily send payments
-from a user to your web app. There's 2 convenience scripts for each environment: 
-LND (the LND daemon process) and LNCLI (to control the daemon via the command line). 
+It also creates 2 distinct LND "environments", client and server, so that we can easily simulate payments
+between the user and your web app. Each environment has 2 convenience scripts: 
+LND (node daemon) and LNCLI (CLI to control the node daemon). 
 
-Start the server LND by running
+Start the server LND instance by running
 
 ```bash
 ./server-lnd.sh
@@ -297,25 +297,24 @@ app.get("/weather", async (req, res) => {
 })
 ```
 
-Great! Let's test it.
+Restart the server and test it.
 
 ```sh
 $ curl localhost:8000/weather
 lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms
 ```
 
+Great! 
+
 That long response string is the entire Lightning invoice 
 encoded in a [special format](https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md), 
 which the user enters it into their Lightning wallet to pay.
 
-To pay it we need to set up the client LND and open a channel with the server LND.
+To pay it we need to set up a client wallet and open a channel with the server. 
 
 ## Set up client wallet
 
-Setting up the client LND is very similar to the server LND with one main difference: the client LND
-needs to open a payment channel with the server LND. 
-
-Before we get to that, let's first start the client LND.
+Setting up the client wallet is very similar to the server. Let's first start the client LND.
 
 ```bash
 ./client-lnd.sh
@@ -339,22 +338,23 @@ Same as the server wallet, the command will print out a 24-word mnemonic for the
 
 **Get testnet Bitcoins**
 
+--- MAKE OBVIOUS THAT FAUCET IS AN OUTSIDE SERVICE ---
+
 To open a channel and pay the server, the client first needs to have testnet Bitcoins.
 
 We're going to get testnet coins by using a "faucet": a service that gives out coins for free. 
 [Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/) is the easiest to use, but feel free to use another if you want.
 
-The faucet will ask for a (Bitcoin) address to send coins to. To get a Bitcoin address from the client, run
+The faucet will ask for a (Bitcoin) address to send coins to. To generate a Bitcoin address on the client, run
 ```sh
 ./client-lncli.sh newaddress p2wkh
 ```
-(["p2wkh"](https://bitcoin.stackexchange.com/questions/64733/what-is-p2pk-p2pkh-p2sh-p2wpkh-eli5)
- is the type of address you're requesting; don't worry about the details for now.)
+*(["p2wkh"](https://bitcoin.stackexchange.com/questions/64733/what-is-p2pk-p2pkh-p2sh-p2wpkh-eli5)
+ is the type of address you're generating; don't worry about the details for now.)*
 
 If you're using Yet Another Bitcoin Testnet Faucet, enter 0.01 for the amount and hit Send.
 
-If all goes according to plan, the faucet will send you a transaction with coins.
-It'll take a while (5-10 mins) to be confirmed. Feel free to grab a coffee or a snack.
+It'll take a while (5-10 mins) for the coins to be confirmed. Feel free to grab a coffee or a snack.
 
 To check whether the transaction is confirmed yet, run
 ```sh
@@ -404,8 +404,6 @@ Check whether the channel transaction is confirmed by running
 ```
 If you see an item in the "channels" array which has "active" set to true, then your channel is open and ready to go.
 
---- TODO: Fix issue where channel never becomes active ---
-
 **Note**: If your channel keeps showing "active": false, try restarting 
 both server and client LNDs and wait a while for them to re-discover each other. 
 You might have to [forcefully kill](https://stackoverflow.com/questions/3510673/find-and-kill-a-process-in-one-line-using-bash-and-regex) the LND process if it doesn't quit with Ctrl+C.
@@ -436,9 +434,11 @@ First fire off a request for a weather report.
 
 ```sh
 $ curl localhost:8000/weather
-lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms```
+lntb10n1pwvyxdxpp52ghumrwlvy9w2dwszw6peswy076f44juljqaje0s3dycvq6q4f0sdrc2ajkzargv4ezqun9wphhyapqv96zq4rgw5syzurjyqer2gpjxqcnjgp3xcarxve6xsezq36d2sknqdpsxqszs3tpwd6x2unwypzxz7tvd9nksapq235k6effcqzpguxmnk2rlqjw0lfq966q6szq3cy8dw2mxwjnxz6j5kfukm539s0wkvf8tmnh37njlydc6exr7yjl6j008883jxrrgkzfdv60lpjdf9vgptrxpms
 ```
-  
+    
+--- TODO: MIGHT HAVE TO WAIT A WHILE OR PAYMENT ROUTE WONT BE FOUND ---
+
 Pay the invoice from the client
 ```sh
 $ ./client-lncli.sh payinvoice <your_invoice_string>
@@ -460,7 +460,7 @@ That's because you haven't written code to verify that a report was paid for, an
 
 ## Verify purchases on server
 
-Final step! 
+Final step! This is the "meat" of the guide so to speak.
 
 To verify the purchase of a report we need to do three things:
 
@@ -502,13 +502,13 @@ We need to mark purchase IDs as completed by reading invoices on the fly.
 The RPC method for this is [`subscribeInvoices`](https://api.lightning.community/#subscribeinvoices).
 
 ```javascript
-const paymentCompleted = {} // Use a real DB in production
+const purchaseCompleted = {} // Use a real DB in production
 const invoiceStream = await lnRpc.subscribeInvoices()
-invoiceStream.on("data", (invoice) => {
+invoiceStream.on("data", invoice => {
     console.log("Invoice:", invoice)
     if (invoice.settled) { // "Settled" means paid
         const purchaseId = invoice.memo.split("||")[1].trim() // Parse purchase ID out of invoice memo
-        paymentCompleted[purchaseId] = true // Mark purchase as paid 
+        purchaseCompleted[purchaseId] = true // Mark purchase as paid 
     }
 })
 
@@ -522,7 +522,7 @@ app.get("/weather", async (req, res) => {
     const purchaseId = req.header("X-Purchase-Id") // Read HTTP header
     if (purchaseId) { // Client has supplied a purchase ID
         console.log("Checking purchase", purchaseId)
-        if (paymentCompleted[purchaseId]) { // Check whether purchase has been paid for
+        if (purchaseCompleted[purchaseId]) { // Check whether purchase has been paid for
             res.send("15 degrees Celsius, cloudy and with a chance of lightning.")
         } else {
             res.status(400).send("Error: Invoice has not been paid")
@@ -585,7 +585,7 @@ Boom! We've successfully purchased a weather report with Lightning micropayments
 
 **Done!**
 
-You've built a functional Lightning app from scratch. Congrats!
+You've built a functional Lightning app from scratch. Nice!
 
 [For reference, here's the entire completed project.](https://github.com/mvanderh/pragmatic-lightning/blob/master/rain-report)
 
@@ -639,7 +639,7 @@ Make sure of this when you set up your app on a cloud provider or elsewhere.
 
 **Docker-compose.yml for production**
 
-I've written a ["production" docker-compose.yml file](./rain-report/docker-compose.production.yml) 
+I've written a ["production" docker-compose.yml file](prod/docker-compose.yml) 
 that has containers for a mainnet Bitcoin node and a mainnet LND node, and connects them. 
 
 I also included an "app" container and Dockerfile that sets convenient environment variables for the app to connect to LND.
