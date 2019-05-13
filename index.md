@@ -62,8 +62,6 @@ enables payments to be routed through peers that don't have to trust each other.
 There aren't yet set standards on how to interact with it from an app's perspective.
 This guide follows the best currently known practices, but these are subject to change in the future.   
 
----
-
 
 # Build a Lightning App
 
@@ -586,7 +584,7 @@ $ curl localhost:8000/weather -H X-Purchase-Id:d439499f-237b-4e28-9fc3-d1854144c
 
 Boom! We've successfully purchased a weather report with Lightning micropayments.
 
-**Done!**
+## Done!
 
 You've built a functional Lightning app from scratch. Nice!
 
