@@ -1,6 +1,5 @@
 ---
-layout: page
-title: Pragmatic Lightning
+title: Pragmatic Lightning | Build a Bitcoin Lightning app in under 1 hour.
 ---
 
 # Introduction
@@ -71,7 +70,7 @@ This guide follows the best currently known practices, but these are subject to 
 In this guide we're going to build a NodeJS + ExpressJS web API which sells weather reports for Lightning micropayments,
  called Rain Report.
  
-**Note**: Returning real weather reports is out of scope for this guide. This app will return only hardcoded reports.
+**Note**: Returning real weather reports is out of scope for this guide. This app will return hardcoded reports.
 
 **Prerequisites**:
 - Unix-based OS (Mac OSX, Linux, FreeBSD etc). If you're a Windows user, you'll need to [run in a Linux VM](https://itsfoss.com/install-linux-in-virtualbox/).
@@ -210,6 +209,8 @@ Unlike traditional payment methods such as Stripe or Paypal, with Bitcoin+Lightn
 An app communicates with a Lightning node using an [RPC (Remote Procedure Call)](https://en.wikipedia.org/wiki/Remote_procedure_call)
  protocol called [GRPC](https://grpc.io/). 
 The app will be using a Node package called ["@radar/lnrpc"](https://www.npmjs.com/package/@radar/lnrpc).
+
+--- DRAW PARALLEL BETWEEN RPC METHODS AND LNCLI COMMANDS --- 
 
 ```sh
 yarn add @radar/lnrpc
@@ -711,7 +712,7 @@ In the process, I read through many guides and made numerous mistakes.
 Hopefully it prevents others from dealing with the same problems and frustrations
 in setting up Lightning, and instead to get them straight to building Lapps.
 
-Thanks for reading!
+Thanks for reading! If you have any comments or criticism, please let me know at --- INSERT CONTACT INFO --- 
 
 **Sources**
 
