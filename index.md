@@ -360,8 +360,8 @@ Same as the server wallet, the command will print out a 24-word mnemonic for the
 
 To open a channel, the client wallet first needs to have testnet Bitcoins.
 
-We're going to get testnet coins by using a website that gives out free coins called a *faucet*:
- [Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/).
+We're going to get testnet coins by using a website that gives out free coins called a *faucet*.
+ [Follow this link: Yet Another Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/).
 
 The website will ask for a (Bitcoin) address to send coins to. To generate a Bitcoin address on the client wallet, run
 ```sh
