@@ -6,6 +6,9 @@ markdown: kramdown
 analytics:
   google: UA-139351657-1
 project: {}
+license:
+  software_url: https://opensource.org/licenses/MIT
+  software: MIT
 social:
   github:
     user: mvanderh

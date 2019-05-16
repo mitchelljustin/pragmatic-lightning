@@ -1,14 +1,17 @@
 ---
-title: Pragmatic Lightning | Build a Bitcoin Lightning app in 1 hour.
+title: Build a Lightning app in 1 hour.
 ---
+
+*Written by [Mitchell Van Der Hoeff](https://github.com/mvanderh)*
 
 # Introduction
 
-{{site.title}} is a step-by-step guide for building an app that accepts Bitcoin micropayments using [Lightning Network](http://lightning.network/).
+{{site.title}} is a step-by-step guide for building a web app with instant Bitcoin micropayments
+ using [Lightning Network](http://lightning.network/).
 
-Unlike other guides, {{site.title}} focuses on building a fully functional app running on Lightning testnet with the lowest amount of time and effort.
+Unlike other guides, this guide focuses on building a fully functional Lightning app with the least amount of time and effort.
 
-You can get up and running in 10 minutes, and finish the full guide in less than 1 hour.
+You can get an app up and running in 10 minutes, and finish the full guide in less than 1 hour.
 
 **Things you can build include..**
 - [A VPN that charges by the hour](https://metervpn.com?utm_source=pragmatic-lightning&utm_medium=blog)
@@ -20,8 +23,8 @@ You can get up and running in 10 minutes, and finish the full guide in less than
 **This guide is for anyone who..**
 
 - Wants to build a Bitcoin app but hesitates because transactions are slow, expensive and/or not private.
-- Has an idea for a micropayment app but hasn't found a way to build it. 
-- Has heard of Lightning Network and wants to learn by building on it.
+- Has an idea for a micropayment app but hasn't found the tech to build it. 
+- Wants to learn about Lightning Network by building on it.
 - Has tried to follow other guides but gave up because they were too difficult.
 
 **This guide will help you..**
@@ -40,19 +43,20 @@ You can get up and running in 10 minutes, and finish the full guide in less than
 
 ## Why Bitcoin?
 
-While there are other cryptocurrencies you could build on, the author of this guide believes Bitcoin is currently the best option.
-It has a proven 10+ year track record of not getting hacked or politically subverted.
-As a result it has the most liquid market, the most stable price and the best brand recognition.
+While there are other cryptocurrencies you could build an app on, the author of this guide believes [Bitcoin](https://en.bitcoin.it/wiki/Main_Page) is still the best option.
+It has a proven 10+ year track record of not getting hacked, and has demonstrated great resistance to change and political pressure. 
 
+As a result it has the most liquid market, the most stable price and the best brand recognition out of all the cryptocurrencies.
 So far, Bitcoin is shaping up to be a true native currency for the Internet. 
 
-From a developer standpoint, the biggest downside of Bitcoin is that transactions are slow and expensive. 
-The Lightning Network fixes this flaw by adding a new layer on top of Bitcoin.
+From a developer standpoint, the biggest downside of Bitcoin is that transactions are expensive and slow. 
+Thankfully, the Lightning Network fixes these flaws by adding a new layer on top of the Bitcoin blockchain.
 
 ## What is Lightning Network?
 
-Lightning Network (also known as "Lightning" or "LN") is a second layer network on Bitcoin.
-Unlike traditional Bitcoin payments, payments on Lightning Network are extremely fast, cheap and anonymous.
+Lightning Network (also known as "Lightning" or "LN") is a "second layer" network on Bitcoin,
+meaning it interacts with the Bitcoin blockchain and uses the same currency but operates as a separate system.
+Unlike traditional Bitcoin payments, payments on Lightning Network are instant, cheap and anonymous.
 
 It uses a construct called a payment channel: a "virtual money tube" between two peers.
 A network of these channels plus special Bitcoin scripts called [HTLCs (Hashed Time Locked Contracts)](https://en.bitcoin.it/wiki/Hash_Time_Locked_Contracts) 
@@ -66,17 +70,17 @@ This guide follows the best currently known practices, but these are subject to 
 # Build a Lightning App
 
 In this guide we're going to build a NodeJS + ExpressJS web API which sells weather reports for Lightning micropayments,
- called Rain Report.
+ called Rain Report. After building it, you'll be able to reuse the code and implement your own Lightning app idea.
  
 **Note**: Returning real weather reports is out of scope for this guide. This app will return hardcoded reports.
 
 **Prerequisites**:
 - Unix-based OS (Mac OSX, Linux, FreeBSD etc). If you're a Windows user, you'll need to [run in a Linux VM](https://itsfoss.com/install-linux-in-virtualbox/).
-- Node v8.0.0+
+- NodeJS v8.0.0+
 
 ## Create web app
 
-Start by creating a vanilla NodeJS/ExpressJS project.
+Start by creating a vanilla NodeJS + ExpressJS project.
 
 ```sh
 mkdir rain-report
@@ -130,7 +134,7 @@ For this guide we'll be using the [LND (Lightning Network Daemon)](https://githu
 **Note: Don't worry about losing money, this Lightning node will run on the test network (testnet) which doesn't use real Bitcoins.
 To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
 
-This guide provides a script that makes installing and running a Lightning node super easy. Run 
+Run this script that makes installing and running a Lightning node super easy. 
 ```sh
 curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/install.sh | bash
 ```
@@ -190,13 +194,13 @@ the [private key](https://en.bitcoin.it/wiki/Private_key) used to control the mo
 
 To do this, we'll run the `lncli` "create" command and generate a new random private key.
 
-Since the node is on testnet, security isn't that important: you can pick a simple 8-character wallet password like "satoshi7".
+Since the node is on testnet, security isn't that important: you can pick a simple 8-character wallet password like "1satoshi".
 
 In a new terminal,
 ```sh
 $ ./server-lncli.sh create
-Input wallet password: satoshi7
-Confirm wallet password: satoshi7
+Input wallet password: 1satoshi
+Confirm wallet password: 1satoshi
 
 Do you have an existing cipher seed mnemonic you want to use? (Enter y/n): n
 
@@ -338,8 +342,8 @@ Setting up the client wallet is very similar to the server. Let's first start th
 To initialize the client wallet,
 ```sh
 $ ./client-lncli.sh create
-Input wallet password: satoshi7
-Confirm wallet password: satoshi7
+Input wallet password: 1satoshi
+Confirm wallet password: 1satoshi
 
 Do you have an existing cipher seed mnemonic you want to use? (Enter y/n): n
 
@@ -729,7 +733,7 @@ in setting up Lightning, and instead to get them building Lapps as fast as possi
 Thanks for reading!
 
 If you have any criticisms or suggestions, please let me know by 
-[opening a Github issue](https://github.com/mvanderh/pragmatic-lightning/issues). 
+[opening a Github issue](https://github.com/mvanderh/pragmatic-lightning/issues) or send me an email. 
 
 **Sources and inspirations**
 
@@ -738,6 +742,10 @@ If you have any criticisms or suggestions, please let me know by
 - [Zap iOS node remote setup guide](https://ln-zap.github.io/zap-tutorials/iOS-remote-node-setup.html)
 - [The LND Github Issues page](https://github.com/lightningnetwork/lnd/issues)
 
-**Social Links**
+**Contact Me**
 
-<a href="https://twitter.com/scalefree_?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-size="large" data-show-screen-name="false" data-show-count="false">Follow @scalefree_</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<a href="https://twitter.com/scalefree_?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-size="large" data-show-count="false">Follow @scalefree_</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+Email: **scalefree \[at\] protonmail.com**
+
+PGP: 08234AAF973E84F80D8876CEE9D76FEDB384DD8E
