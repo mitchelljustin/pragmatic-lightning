@@ -135,7 +135,7 @@ For this guide we'll be using the [LND (Lightning Network Daemon)](https://githu
 **Note: Don't worry about losing money, this Lightning node will run on the test network (testnet) which doesn't use real Bitcoins.
 To accept real Bitcoins, the Lightning node has to run on the main network (mainnet).**
 
-Run this script that makes installing and running a Lightning node super easy. 
+Run 
 ```sh
 curl https://raw.githubusercontent.com/mvanderh/pragmatic-lightning/master/install.sh | bash
 ```
