@@ -2,14 +2,15 @@
 title: Pragmatic Lightning - Build a Lightning app in 1 hour.
 ---
 
-*Written by [Mitchell Van Der Hoeff](https://github.com/mvanderh)*
+*Written by [Mitchell Van Der Hoeff](https://twitter.com/scalefree_)*
 
 # Introduction
 
 {{site.title}} is a step-by-step guide for building a web app with instant Bitcoin micropayments
  using [Lightning Network](http://lightning.network/).
 
-Unlike other guides, this guide focuses on building a fully functional Lightning app with the least amount of time and effort.
+Unlike other guides, this guide focuses on building a fully functional Lightning app with 
+the least amount of time and effort and with minimal installation.
 
 You can get an app up and running in 10 minutes, and finish the full guide in less than 1 hour.
 
@@ -724,7 +725,7 @@ A few best practices to minimize the risk of your money getting stolen or lost:
 
 # Epilogue
 
-Pragmatic Lightning was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com?utm_source=pragmatic-lightning&utm_medium=blog).
+Pragmatic Lightning was borne out of frustration in setting up Lightning payments for my own app, [MeterVPN](https://metervpn.com?utm_source=pragmatic-lightning&utm_medium=blog) .
 In the process, I read through many guides and made numerous mistakes.
 
 Hopefully this guide prevents others from dealing with the same problems and frustrations
@@ -733,7 +734,7 @@ in setting up Lightning, and instead to get them building Lapps as fast as possi
 Thanks for reading!
 
 If you have any criticisms or suggestions, please let me know by 
-[opening a Github issue](https://github.com/mvanderh/pragmatic-lightning/issues) or send me an email. 
+[opening a Github issue](https://github.com/mvanderh/pragmatic-lightning/issues). 
 
 **Sources and inspirations**
 
@@ -744,8 +745,6 @@ If you have any criticisms or suggestions, please let me know by
 
 **Contact Me**
 
-<a href="https://twitter.com/scalefree_?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-size="large" data-show-count="false">Follow @scalefree_</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+DM me on Twitter: [@scalefree_](https://twitter.com/scalefree_)
 
-Email: **scalefree \[at\] protonmail.com**
-
-PGP: 08234AAF973E84F80D8876CEE9D76FEDB384DD8E
+<a href="https://twitter.com/intent/tweet?screen_name=scalefree_&ref_src=twsrc%5Etfw" class="twitter-mention-button" data-show-count="false">Tweet to @scalefree_</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
