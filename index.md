@@ -1,5 +1,5 @@
 ---
-title: Build a Lightning app in 1 hour.
+title: Pragmatic Lightning - Build a Lightning app in 1 hour.
 ---
 
 *Written by [Mitchell Van Der Hoeff](https://github.com/mvanderh)*
