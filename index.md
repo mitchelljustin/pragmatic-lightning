@@ -633,7 +633,7 @@ In the current state of Lightning and Bitcoin development, this still requires a
 
 The next section breaks it down for you and makes it as easy as possible.  
 
-**Note: This section is still a work in progress. I will update it as I find better and easier ways to migrate a Lighting app to mainnet.**
+**Note: This section is incomplete and a work in progress.**
 
 ## Run web app in production
 
