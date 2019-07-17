@@ -26,7 +26,7 @@ cat <<-EOF
 
 EOF
 
-PRELOADED_DATA_URL=https://media.githubusercontent.com/media/mvanderh/pragmatic-lightning/master/lnd_data.tar.gz
+PRELOADED_DATA_URL=https://www.dropbox.com/s/w86y21o0lkerb20/lnd_data.tar.gz?dl=0
 
 function githubLatestTag {
     finalUrl=$(curl "https://github.com/$1/releases/latest" -s -L -I -o /dev/null -w '%{url_effective}')
@@ -79,7 +79,7 @@ if test "x$platform" = "x"; then
 |      COULD NOT DETECT PLATFORM      |
 \\=====================================/
 
-Uh oh! We couldn't automatically detect your operating system.
+Uh oh! We couldnt automatically detect your operating system.
 
 To continue with installation, please choose from one of the following values:
 
@@ -113,7 +113,7 @@ rm -rf "$dirname"
 
 echo "-> Downloading testnet blockchain data"
 echo "-> Downloading $PRELOADED_DATA_URL"
-curl -O "$PRELOADED_DATA_URL"
+curl -L -o lnd_data.tar.gz "$PRELOADED_DATA_URL"
 tar xvf lnd_data.tar.gz
 
 echo "-> Copying data and configs for client and server node"
